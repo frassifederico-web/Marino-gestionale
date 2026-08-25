@@ -1,0 +1,41 @@
+name: Pubblica MARINO Gestionale
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepara sito MARINO
+        run: |
+          mkdir -p _site
+          curl --fail --silent --show-error --location \
+            "https://olkvweveldtkavmgccex.supabase.co/functions/v1/marino-app" \
+            --output _site/index.html
+          touch _site/.nojekyll
+      - name: Configura Pages
+        uses: actions/configure-pages@v5
+      - name: Carica artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+      - name: Pubblica
+        id: deployment
+        uses: actions/deploy-pages@v4
