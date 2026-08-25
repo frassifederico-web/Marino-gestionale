@@ -29,6 +29,17 @@ jobs:
           curl --fail --silent --show-error --location \
             "https://olkvweveldtkavmgccex.supabase.co/functions/v1/marino-app" \
             --output _site/index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_site/index.html')
+          s=p.read_text()
+          s=s.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js')
+          marker='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script><script>'
+          diag='''<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script><script>window.addEventListener('error',function(e){var m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.message||'errore JavaScript');}});</script><script>'''
+          if marker in s:
+              s=s.replace(marker,diag,1)
+          p.write_text(s)
+          PY
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
