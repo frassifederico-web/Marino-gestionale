@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Prepara sito MARINO
+      - name: Prepara e valida sito MARINO
         run: |
           mkdir -p _site
           curl --fail --silent --show-error --location \
@@ -31,6 +31,7 @@ jobs:
             --output _site/index.html
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('_site/index.html')
           s=p.read_text()
           s=s.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js')
@@ -39,7 +40,10 @@ jobs:
           if marker in s:
               s=s.replace(marker,diag,1)
           p.write_text(s)
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S)
+          Path('/tmp/marino-inline.js').write_text('\n'.join(scripts))
           PY
+          node --check /tmp/marino-inline.js
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
