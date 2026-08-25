@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Prepara e valida sito MARINO
+      - name: Prepara, correggi e valida sito MARINO
         run: |
           mkdir -p _site
           curl --fail --silent --show-error --location \
@@ -35,10 +35,17 @@ jobs:
           p=Path('_site/index.html')
           s=p.read_text()
           s=s.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js')
+          fixes={
+            'onclick="editBooking(\'\'+r.id+\'\')"':'onclick="editBooking(\\\''+r.id+'\\\')"',
+            'onclick="delBooking(\'\'+r.id+\'\')"':'onclick="delBooking(\\\''+r.id+'\\\')"',
+            'onclick="toggleTable(\'\'+t.code+\'\')"':'onclick="toggleTable(\\\''+t.code+'\\\')"',
+            'onclick="toggleMenu(\'\'+x.id+\'\',' :'onclick="toggleMenu(\\\''+x.id+'\\\',' ,
+            'onclick="deleteMenu(\'\'+x.id+\'\')"':'onclick="deleteMenu(\\\''+x.id+'\\\')"'
+          }
+          for a,b in fixes.items(): s=s.replace(a,b)
           marker='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script><script>'
           diag='''<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script><script>window.addEventListener('error',function(e){var m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.message||'errore JavaScript');}});</script><script>'''
-          if marker in s:
-              s=s.replace(marker,diag,1)
+          if marker in s: s=s.replace(marker,diag,1)
           p.write_text(s)
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S)
           Path('/tmp/marino-inline.js').write_text('\n'.join(scripts))
