@@ -34,14 +34,13 @@ jobs:
           import re
           p=Path('_site/index.html')
           s=p.read_text()
-          # Il bundle UMD ufficiale di supabase-js@2 è già servito dall'URL base jsDelivr.
-          # La precedente riscrittura verso /dist/umd/supabase.js produceva un errore cross-origin in Safari.
           s=s.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2')
           s=s.replace("onclick=\"editBooking(''+r.id+'')\"", "onclick=\"editBooking(\\''+r.id+'\\')\"")
           s=s.replace("onclick=\"delBooking(''+r.id+'')\"", "onclick=\"delBooking(\\''+r.id+'\\')\"")
           s=s.replace("onclick=\"toggleTable(''+t.code+'')\"", "onclick=\"toggleTable(\\''+t.code+'\\')\"")
           s=s.replace("onclick=\"deleteMenu(''+x.id+'')\"", "onclick=\"deleteMenu(\\''+x.id+'\\')\"")
-          s=s.replace(r'''onclick=\"toggleMenu(''+x.id+'','+(!x.active)+')\"''', r'''onclick=\"toggleMenu(\\''+x.id+'\\','+(!x.active)+')\"''')
+          # Correzione robusta del frammento toggleMenu malformato generato dalla Edge Function.
+          s=s.replace("onclick=\"toggleMenu(''+x.id+'','+(!x.active)+')\"", "onclick=\"toggleMenu(\\''+x.id+'\\','+(!x.active)+')\"")
           s=s.replace("if(confirm(t+'\n\nVuoi comunque forzare questa prenotazione?'))", "if(confirm(t+'\\n\\nVuoi comunque forzare questa prenotazione?'))")
           marker='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>'
           diag='''<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.addEventListener('error',function(e){var m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.message||'errore JavaScript');}});</script><script>'''
