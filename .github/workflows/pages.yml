@@ -65,7 +65,6 @@ jobs:
           if n!=1:
               raise SystemExit(f'renderPicker non sostituito: {n}')
 
-          # Menu: consultazione statica per tutti; gestione spostata in Accessi e visibile solo al principale.
           s=s.replace('<section id="menu" class="page"><div class="card"><h3>Menu di servizio</h3>', '<section id="menu" class="page"><div class="card" id="menuEditor"><h3>Gestione menu</h3>',1)
           s=s.replace('<section id="access" class="page"><div class="card"><h3>Accessi</h3>', '<section id="access" class="page"><div class="card"><h3>Accessi e amministrazione</h3><div id="menuAdminSlot"></div>',1)
 
@@ -74,23 +73,23 @@ jobs:
           if n!=1:
               raise SystemExit(f'renderMenu non sostituito: {n}')
 
-          admin_fn="""
-function renderMenuAdmin(){
-  let editor=$('menuEditor'),slot=$('menuAdminSlot');
-  if(!editor||!slot)return;
-  if(profile?.role==='principal'){
-    editor.style.display='block';
-    if(editor.parentElement!==slot)slot.appendChild(editor);
-    let old=$('menuAdminList');if(old)old.remove();
-    let box=document.createElement('div');box.id='menuAdminList';box.className='card';box.innerHTML='<h3>Piatti caricati</h3>'+menuItems.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.category)+' · '+(x.active?'VISIBILE':'NASCOSTO')+'</div></div><div class="actions"><button class="secondary" data-menu-toggle="'+esc(x.id)+'" data-active="'+(!x.active)+'">'+(x.active?'Nascondi':'Mostra')+'</button><button class="danger" data-menu-delete="'+esc(x.id)+'">Elimina</button></div></div>').join('');slot.appendChild(box);
-    box.querySelectorAll('[data-menu-toggle]').forEach(b=>b.addEventListener('click',()=>toggleMenu(b.dataset.menuToggle,b.dataset.active==='true')));
-    box.querySelectorAll('[data-menu-delete]').forEach(b=>b.addEventListener('click',()=>deleteMenu(b.dataset.menuDelete)));
-  }else{
-    editor.style.display='none';
-    let old=$('menuAdminList');if(old)old.remove();
-  }
-}
-"""
+          admin_fn="\n".join([
+            "function renderMenuAdmin(){",
+            "  let editor=$('menuEditor'),slot=$('menuAdminSlot');",
+            "  if(!editor||!slot)return;",
+            "  if(profile?.role==='principal'){",
+            "    editor.style.display='block';",
+            "    if(editor.parentElement!==slot)slot.appendChild(editor);",
+            "    let old=$('menuAdminList');if(old)old.remove();",
+            "    let box=document.createElement('div');box.id='menuAdminList';box.className='card';box.innerHTML='<h3>Piatti caricati</h3>'+menuItems.map(x=>'<div class=\"row\"><div><b>'+esc(x.name)+'</b><div class=\"muted\">'+esc(x.category)+' · '+(x.active?'VISIBILE':'NASCOSTO')+'</div></div><div class=\"actions\"><button class=\"secondary\" data-menu-toggle=\"'+esc(x.id)+'\" data-active=\"'+(!x.active)+'\">'+(x.active?'Nascondi':'Mostra')+'</button><button class=\"danger\" data-menu-delete=\"'+esc(x.id)+'\">Elimina</button></div></div>').join('');slot.appendChild(box);",
+            "    box.querySelectorAll('[data-menu-toggle]').forEach(b=>b.addEventListener('click',()=>toggleMenu(b.dataset.menuToggle,b.dataset.active==='true')));",
+            "    box.querySelectorAll('[data-menu-delete]').forEach(b=>b.addEventListener('click',()=>deleteMenu(b.dataset.menuDelete)));",
+            "  }else{",
+            "    editor.style.display='none';",
+            "    let old=$('menuAdminList');if(old)old.remove();",
+            "  }",
+            "}"
+          ])
           s=s.replace('async function addMenu',admin_fn+'\nasync function addMenu',1)
 
           old='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>'
