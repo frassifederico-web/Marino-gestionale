@@ -56,8 +56,9 @@ jobs:
             "    if(overlaps.length){label='Occupato · '+overlaps.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');}",
             "    else if(used){label='Rimpiazzabile · '+rs.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');}",
             "    if(selected.includes(t.code))cl+=' selected';",
-            "    return '<button type=\"button\" class=\"table '+cl+'\" '+(overlaps.length?'disabled aria-disabled=\"true\"':'onclick=\"toggleTable(\\\\\''+t.code+'\\\\\')\"')+'><b>'+esc(t.label)+'</b><div class=\"muted\">'+esc(label)+'</div></button>';",
-            "  }).join('')",
+            "    return '<button type=\"button\" class=\"table '+cl+'\" data-code=\"'+esc(t.code)+'\" '+(overlaps.length?'disabled aria-disabled=\"true\"':'')+'><b>'+esc(t.label)+'</b><div class=\"muted\">'+esc(label)+'</div></button>';",
+            "  }).join('');",
+            "  $('picker').querySelectorAll('button[data-code]:not(:disabled)').forEach(b=>b.addEventListener('click',()=>toggleTable(b.dataset.code)));",
             "}function toggleTable"
           ])
           s,n=re.subn(r"function renderPicker\(\)\{.*?\}function toggleTable",lambda m:new_picker,s,count=1,flags=re.S)
