@@ -40,6 +40,16 @@ jobs:
           s=s.replace('</head>', '<style id="marino-ui-refresh">\n'+css+'\n</style></head>', 1)
           p.write_text(s)
           PY
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_site/index.html')
+          css=Path('scripts/mobile_override.css').read_text()
+          s=p.read_text()
+          if '</head>' not in s:
+              raise SystemExit('head non trovato per mobile override')
+          s=s.replace('</head>', css+'\n</head>', 1)
+          p.write_text(s)
+          PY
           node --check /tmp/marino-module.mjs
           grep -q 'type="module"' _site/index.html
           grep -q 'tableSelectionSummary' _site/index.html
@@ -55,7 +65,11 @@ jobs:
           grep -q 'safe-area-inset-bottom' _site/index.html
           grep -q '@media(max-width:720px)' _site/index.html
           grep -q 'marino-ui-refresh' _site/index.html
+          grep -q 'marino-mobile-override' _site/index.html
           grep -q 'SF Pro Text' _site/index.html
+          grep -q -- '--m-green:#2f8b4c' _site/index.html
+          grep -q -- '--m-red:#c73535' _site/index.html
+          grep -q -- '--m-purple:#7b4ab2' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
