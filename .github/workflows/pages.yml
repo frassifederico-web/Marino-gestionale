@@ -30,7 +30,7 @@ jobs:
             "https://olkvweveldtkavmgccex.supabase.co/functions/v1/marino-app" \
             --output _site/index.html
           python scripts/patch_marino.py
-          python scripts/force_capacity_hotfix.py
+          python scripts/turnover_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -56,10 +56,11 @@ jobs:
           grep -q 'tableSelectionSummary' _site/index.html
           grep -q 'Prossimo' _site/index.html
           grep -q 'Turno precedente' _site/index.html
+          grep -q 'availabilityWindow' _site/index.html
+          grep -q '15 min riassetto' _site/index.html
+          grep -q '1h45 + 15 min' _site/index.html
           grep -q 'coverRange' _site/index.html
           grep -q 'IDEALE' _site/index.html
-          grep -q 'Rimpiazzabile 1h45' _site/index.html
-          grep -q 'Forzabile 1h30' _site/index.html
           grep -q 'Menu disponibile' _site/index.html
           grep -q '+ Nuova prenotazione' _site/index.html
           grep -q '100dvh' _site/index.html
@@ -68,12 +69,6 @@ jobs:
           grep -q 'marino-ui-refresh' _site/index.html
           grep -q 'marino-mobile-override' _site/index.html
           grep -q 'SF Pro Text' _site/index.html
-          grep -q -- '--m-green:#168443' _site/index.html
-          grep -q -- '--m-red:#d72d2d' _site/index.html
-          grep -q -- '--m-purple:#7436b5' _site/index.html
-          grep -q "selected.length>0" _site/index.html
-          grep -q "coperti consentit" _site/index.html
-          grep -q 'tabs button:nth-child(5)::before' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
