@@ -41,28 +41,26 @@ jobs:
           s=s.replace("onclick=\"toggleMenu(''+x.id+'','+(!x.active)+')\"", "onclick=\"toggleMenu(\\''+x.id+'\\','+(!x.active)+')\"")
           s=s.replace("if(confirm(t+'\n\nVuoi comunque forzare questa prenotazione?'))", "if(confirm(t+'\\n\\nVuoi comunque forzare questa prenotazione?'))")
 
-          # Disponibilità tavoli basata sull'intervallo orario della nuova prenotazione.
-          new_picker=r'''function hhmm(v){return v?String(v).slice(0,5):''}
-function intervalOverlaps(aStart,aEnd,bStart,bEnd){return aStart<bEnd&&bStart<aEnd}
-function renderPicker(){
-  let room=$('room').value,start=hhmm($('arrival').value)||'00:00',end=hhmm($('endTime').value)||'23:59';
-  let roomTables=allTables.filter(t=>t.area===room&&t.active);
-  $('picker').innerHTML=roomTables.map(t=>{
-    let rs=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).map(x=>reservations.find(r=>r.id===x.reservation_id)).filter(Boolean);
-    let overlaps=rs.filter(r=>intervalOverlaps(start,end,hhmm(r.arrival_time),hhmm(r.expected_end_time)||'23:59'));
-    let used=rs.length>0;
-    let cl=overlaps.length?'busy':used?'rebook':'free';
-    let label='Libero';
-    if(overlaps.length){
-      label='Occupato · '+overlaps.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');
-    }else if(used){
-      label='Rimpiazzabile · '+rs.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');
-    }
-    if(selected.includes(t.code))cl+=' selected';
-    return '<button type="button" class="table '+cl+'" '+(overlaps.length?'disabled aria-disabled="true"':'onclick="toggleTable(\\''+t.code+'\\')"')+'><b>'+esc(t.label)+'</b><div class="muted">'+esc(label)+'</div></button>';
-  }).join('')
-}function toggleTable'''
-          s,n=re.subn(r"function renderPicker\(\)\{.*?\}function toggleTable",new_picker,s,count=1,flags=re.S)
+          new_picker="\n".join([
+            "function hhmm(v){return v?String(v).slice(0,5):''}",
+            "function intervalOverlaps(aStart,aEnd,bStart,bEnd){return aStart<bEnd&&bStart<aEnd}",
+            "function renderPicker(){",
+            "  let room=$('room').value,start=hhmm($('arrival').value)||'00:00',end=hhmm($('endTime').value)||'23:59';",
+            "  let roomTables=allTables.filter(t=>t.area===room&&t.active);",
+            "  $('picker').innerHTML=roomTables.map(t=>{",
+            "    let rs=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).map(x=>reservations.find(r=>r.id===x.reservation_id)).filter(Boolean);",
+            "    let overlaps=rs.filter(r=>intervalOverlaps(start,end,hhmm(r.arrival_time),hhmm(r.expected_end_time)||'23:59'));",
+            "    let used=rs.length>0;",
+            "    let cl=overlaps.length?'busy':used?'rebook':'free';",
+            "    let label='Libero';",
+            "    if(overlaps.length){label='Occupato · '+overlaps.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');}",
+            "    else if(used){label='Rimpiazzabile · '+rs.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');}",
+            "    if(selected.includes(t.code))cl+=' selected';",
+            "    return '<button type=\"button\" class=\"table '+cl+'\" '+(overlaps.length?'disabled aria-disabled=\"true\"':'onclick=\"toggleTable(\\\\\''+t.code+'\\\\\')\"')+'><b>'+esc(t.label)+'</b><div class=\"muted\">'+esc(label)+'</div></button>';",
+            "  }).join('')",
+            "}function toggleTable"
+          ])
+          s,n=re.subn(r"function renderPicker\(\)\{.*?\}function toggleTable",lambda m:new_picker,s,count=1,flags=re.S)
           if n!=1:
               raise SystemExit(f'renderPicker non sostituito: {n}')
 
