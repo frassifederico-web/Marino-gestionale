@@ -56,14 +56,42 @@ jobs:
             "    if(overlaps.length){label='Occupato · '+overlaps.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');}",
             "    else if(used){label='Rimpiazzabile · '+rs.map(r=>hhmm(r.arrival_time)+'–'+(hhmm(r.expected_end_time)||'fine servizio')).join(', ');}",
             "    if(selected.includes(t.code))cl+=' selected';",
-            "    return '<button type=\"button\" class=\"table '+cl+'\" data-code=\"'+esc(t.code)+'\" '+(overlaps.length?'disabled aria-disabled=\"true\"':'')+'><b>'+esc(t.label)+'</b><div class=\"muted\">'+esc(label)+'</div></button>';",
+            "    return '<button type=\"button\" class=\"table '+cl+'\" '+(overlaps.length?'disabled aria-disabled=\"true\"':'data-table-code=\"'+esc(t.code)+'\"')+'><b>'+esc(t.label)+'</b><div class=\"muted\">'+esc(label)+'</div></button>';",
             "  }).join('');",
-            "  $('picker').querySelectorAll('button[data-code]:not(:disabled)').forEach(b=>b.addEventListener('click',()=>toggleTable(b.dataset.code)));",
+            "  $('picker').querySelectorAll('[data-table-code]').forEach(b=>b.addEventListener('click',()=>toggleTable(b.dataset.tableCode)));",
             "}function toggleTable"
           ])
           s,n=re.subn(r"function renderPicker\(\)\{.*?\}function toggleTable",lambda m:new_picker,s,count=1,flags=re.S)
           if n!=1:
               raise SystemExit(f'renderPicker non sostituito: {n}')
+
+          # Menu: consultazione statica per tutti; gestione spostata in Accessi e visibile solo al principale.
+          s=s.replace('<section id="menu" class="page"><div class="card"><h3>Menu di servizio</h3>', '<section id="menu" class="page"><div class="card" id="menuEditor"><h3>Gestione menu</h3>',1)
+          s=s.replace('<section id="access" class="page"><div class="card"><h3>Accessi</h3>', '<section id="access" class="page"><div class="card"><h3>Accessi e amministrazione</h3><div id="menuAdminSlot"></div>',1)
+
+          new_render_menu="""function renderMenu(){let cats=['Antipasto','Primo','Secondo','Dolce','Altro'];let visible=menuItems.filter(x=>x.active);$('menuList').innerHTML='<div class=\"card\"><h3>Menu disponibile</h3><div class=\"muted\">Consultazione rapida per telefonate, allergeni e intolleranze.</div></div>'+cats.map(c=>{let a=visible.filter(x=>x.category===c);if(!a.length)return'';return '<div class=\"card\"><h3>'+c+'</h3>'+a.map(x=>'<div class=\"row\"><div><b>'+esc(x.name)+' · '+(x.price==null?'—':Number(x.price).toFixed(2).replace('.',',')+' €')+'</b><div class=\"muted\">'+esc(x.description||'')+(x.allergens?.length?' · Allergeni: '+esc(x.allergens.join(', ')):'')+(x.dietary_tags?.length?' · '+esc(x.dietary_tags.join(', ')):'')+'</div></div></div>').join('')+'</div>'}).join('');renderMenuAdmin()}"""
+          s,n=re.subn(r"function renderMenu\(\)\{.*?\}\nasync function addMenu",new_render_menu+'\nasync function addMenu',s,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit(f'renderMenu non sostituito: {n}')
+
+          admin_fn="""
+function renderMenuAdmin(){
+  let editor=$('menuEditor'),slot=$('menuAdminSlot');
+  if(!editor||!slot)return;
+  if(profile?.role==='principal'){
+    editor.style.display='block';
+    if(editor.parentElement!==slot)slot.appendChild(editor);
+    let old=$('menuAdminList');if(old)old.remove();
+    let box=document.createElement('div');box.id='menuAdminList';box.className='card';box.innerHTML='<h3>Piatti caricati</h3>'+menuItems.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.category)+' · '+(x.active?'VISIBILE':'NASCOSTO')+'</div></div><div class="actions"><button class="secondary" data-menu-toggle="'+esc(x.id)+'" data-active="'+(!x.active)+'">'+(x.active?'Nascondi':'Mostra')+'</button><button class="danger" data-menu-delete="'+esc(x.id)+'">Elimina</button></div></div>').join('');slot.appendChild(box);
+    box.querySelectorAll('[data-menu-toggle]').forEach(b=>b.addEventListener('click',()=>toggleMenu(b.dataset.menuToggle,b.dataset.active==='true')));
+    box.querySelectorAll('[data-menu-delete]').forEach(b=>b.addEventListener('click',()=>deleteMenu(b.dataset.menuDelete)));
+  }else{
+    editor.style.display='none';
+    let old=$('menuAdminList');if(old)old.remove();
+  }
+}
+"""
+          s=s.replace('async function addMenu',admin_fn+'\nasync function addMenu',1)
 
           old='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>'
           new='''<script type="module">\nimport { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";\n'''
@@ -97,6 +125,8 @@ jobs:
           grep -q 'Object.assign(window' _site/index.html
           grep -q 'marino-mobile-booking-fix' _site/index.html
           grep -q 'Rimpiazzabile' _site/index.html
+          grep -q 'menuAdminSlot' _site/index.html
+          grep -q 'Menu disponibile' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
