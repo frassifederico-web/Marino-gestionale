@@ -34,7 +34,6 @@ jobs:
           import re
           p=Path('_site/index.html')
           s=p.read_text()
-          # Corregge i frammenti dinamici malformati prodotti dalla sorgente attuale.
           s=s.replace("onclick=\"editBooking(''+r.id+'')\"", "onclick=\"editBooking(\\''+r.id+'\\')\"")
           s=s.replace("onclick=\"delBooking(''+r.id+'')\"", "onclick=\"delBooking(\\''+r.id+'\\')\"")
           s=s.replace("onclick=\"toggleTable(''+t.code+'')\"", "onclick=\"toggleTable(\\''+t.code+'\\')\"")
@@ -42,7 +41,6 @@ jobs:
           s=s.replace("onclick=\"toggleMenu(''+x.id+'','+(!x.active)+')\"", "onclick=\"toggleMenu(\\''+x.id+'\\','+(!x.active)+')\"")
           s=s.replace("if(confirm(t+'\n\nVuoi comunque forzare questa prenotazione?'))", "if(confirm(t+'\\n\\nVuoi comunque forzare questa prenotazione?'))")
 
-          # Safari/iOS: elimina il bundle UMD cross-origin e usa il modulo ESM ufficiale.
           old='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>'
           new='''<script type="module">\nimport { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";\n'''
           if old not in s:
@@ -50,18 +48,21 @@ jobs:
           s=s.replace(old,new,1)
           s=s.replace('const db=supabase.createClient(URL,KEY,','const db=createClient(URL,KEY,',1)
 
-          # Le funzioni richiamate dagli onclick devono essere esposte a window perché ora lo script è un modulo.
           expose="""\nObject.assign(window,{login,signup,logout,showPage,dayChanged,loadAll,saveServiceSettings,openBooking,closeBooking,setMapRoom,editBooking,toggleTable,saveBooking,delBooking,addMenu,toggleMenu,deleteMenu,inviteAdmin});\n"""
           marker='(async()=>{let s=(await db.auth.getSession()).data.session;if(s)afterAuth(s)})();'
           if marker not in s:
               raise SystemExit('Marker bootstrap non trovato')
           s=s.replace(marker,expose+marker,1)
 
-          # Diagnostica locale: ora gli errori del modulo vengono mostrati con messaggio/stack quando disponibile.
           diag="""\nwindow.addEventListener('error',e=>{const m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.message||'errore JavaScript');}});\nwindow.addEventListener('unhandledrejection',e=>{const m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.reason?.message||String(e.reason||'promessa non gestita'));}});\n"""
           s=s.replace('const URL=',diag+'const URL=',1)
-          p.write_text(s)
 
+          mobile_css='''\n<style id="marino-mobile-booking-fix">\n@media(max-width:720px){\n  .modal{padding:0;align-items:stretch;justify-content:stretch}\n  .modal.open{display:block}\n  .modal .box{width:100%;height:100dvh;max-height:none;border-radius:0;border-left:0;border-right:0;padding:12px 10px 110px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}\n  .modal .box>.actions:first-child{position:sticky;top:0;z-index:5;background:var(--cream2);padding:6px 0 10px;margin:-2px 0 6px}\n  .modal .grid{grid-template-columns:1fr}\n  .modal .full{grid-column:1}\n  #picker{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:10px!important;max-height:none!important;overflow:visible!important}\n  #picker .table{display:block!important;min-height:76px!important;width:100%!important;font-size:15px!important;padding:10px 8px!important}\n  #picker .table b{display:block;font-size:16px}\n  #saveMsg{margin-bottom:8px}\n  .modal .box>button.primary[onclick*="saveBooking"]{position:sticky;bottom:10px;z-index:6;width:100%;min-height:52px;font-size:17px;box-shadow:0 8px 20px rgba(6,63,120,.18)}\n}\n</style>\n'''
+          if '</head>' not in s:
+              raise SystemExit('head non trovato')
+          s=s.replace('</head>',mobile_css+'</head>',1)
+
+          p.write_text(s)
           scripts=re.findall(r'<script type="module">(.*?)</script>',s,re.S)
           if len(scripts)!=1:
               raise SystemExit(f'Atteso 1 script module, trovati {len(scripts)}')
@@ -70,6 +71,7 @@ jobs:
           node --check /tmp/marino-module.mjs
           grep -q 'type="module"' _site/index.html
           grep -q 'Object.assign(window' _site/index.html
+          grep -q 'marino-mobile-booking-fix' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
