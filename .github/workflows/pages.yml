@@ -34,10 +34,16 @@ jobs:
           grep -q 'type="module"' _site/index.html
           grep -q 'tableSelectionSummary' _site/index.html
           grep -q 'Prossimo' _site/index.html
-          grep -q 'coperti</div>' _site/index.html
-          grep -q 'Rimpiazzo standard: almeno 1h45' _site/index.html
+          grep -q 'Turno precedente' _site/index.html
+          grep -q 'coverRange' _site/index.html
+          grep -q 'IDEALE' _site/index.html
+          grep -q 'Rimpiazzabile 1h45' _site/index.html
+          grep -q 'Forzabile 1h30' _site/index.html
           grep -q 'Menu disponibile' _site/index.html
           grep -q '+ Nuova prenotazione' _site/index.html
+          grep -q '100dvh' _site/index.html
+          grep -q 'safe-area-inset-bottom' _site/index.html
+          grep -q '@media(max-width:720px)' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
