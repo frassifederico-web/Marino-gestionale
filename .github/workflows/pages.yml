@@ -34,22 +34,42 @@ jobs:
           import re
           p=Path('_site/index.html')
           s=p.read_text()
-          s=s.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2')
+          # Corregge i frammenti dinamici malformati prodotti dalla sorgente attuale.
           s=s.replace("onclick=\"editBooking(''+r.id+'')\"", "onclick=\"editBooking(\\''+r.id+'\\')\"")
           s=s.replace("onclick=\"delBooking(''+r.id+'')\"", "onclick=\"delBooking(\\''+r.id+'\\')\"")
           s=s.replace("onclick=\"toggleTable(''+t.code+'')\"", "onclick=\"toggleTable(\\''+t.code+'\\')\"")
           s=s.replace("onclick=\"deleteMenu(''+x.id+'')\"", "onclick=\"deleteMenu(\\''+x.id+'\\')\"")
-          # Correzione robusta del frammento toggleMenu malformato generato dalla Edge Function.
           s=s.replace("onclick=\"toggleMenu(''+x.id+'','+(!x.active)+')\"", "onclick=\"toggleMenu(\\''+x.id+'\\','+(!x.active)+')\"")
           s=s.replace("if(confirm(t+'\n\nVuoi comunque forzare questa prenotazione?'))", "if(confirm(t+'\\n\\nVuoi comunque forzare questa prenotazione?'))")
-          marker='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>'
-          diag='''<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.addEventListener('error',function(e){var m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.message||'errore JavaScript');}});</script><script>'''
-          if marker in s: s=s.replace(marker,diag,1)
+
+          # Safari/iOS: elimina il bundle UMD cross-origin e usa il modulo ESM ufficiale.
+          old='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>'
+          new='''<script type="module">\nimport { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";\n'''
+          if old not in s:
+              raise SystemExit('Tag Supabase atteso non trovato')
+          s=s.replace(old,new,1)
+          s=s.replace('const db=supabase.createClient(URL,KEY,','const db=createClient(URL,KEY,',1)
+
+          # Le funzioni richiamate dagli onclick devono essere esposte a window perché ora lo script è un modulo.
+          expose="""\nObject.assign(window,{login,signup,logout,showPage,dayChanged,loadAll,saveServiceSettings,openBooking,closeBooking,setMapRoom,editBooking,toggleTable,saveBooking,delBooking,addMenu,toggleMenu,deleteMenu,inviteAdmin});\n"""
+          marker='(async()=>{let s=(await db.auth.getSession()).data.session;if(s)afterAuth(s)})();'
+          if marker not in s:
+              raise SystemExit('Marker bootstrap non trovato')
+          s=s.replace(marker,expose+marker,1)
+
+          # Diagnostica locale: ora gli errori del modulo vengono mostrati con messaggio/stack quando disponibile.
+          diag="""\nwindow.addEventListener('error',e=>{const m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.message||'errore JavaScript');}});\nwindow.addEventListener('unhandledrejection',e=>{const m=document.getElementById('authmsg');if(m){m.style.display='block';m.textContent='Errore app: '+(e.reason?.message||String(e.reason||'promessa non gestita'));}});\n"""
+          s=s.replace('const URL=',diag+'const URL=',1)
           p.write_text(s)
-          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S)
-          Path('/tmp/marino-inline.js').write_text('\n'.join(scripts))
+
+          scripts=re.findall(r'<script type="module">(.*?)</script>',s,re.S)
+          if len(scripts)!=1:
+              raise SystemExit(f'Atteso 1 script module, trovati {len(scripts)}')
+          Path('/tmp/marino-module.mjs').write_text(scripts[0])
           PY
-          node --check /tmp/marino-inline.js
+          node --check /tmp/marino-module.mjs
+          grep -q 'type="module"' _site/index.html
+          grep -q 'Object.assign(window' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
