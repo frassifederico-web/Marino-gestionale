@@ -57,8 +57,9 @@ jobs:
           grep -q 'Prossimo' _site/index.html
           grep -q 'Turno precedente' _site/index.html
           grep -q 'availabilityWindow' _site/index.html
-          grep -q '15 min riassetto' _site/index.html
-          grep -q '1h45 + 15 min' _site/index.html
+          grep -q 'Tavolo prenotabile dalle ore' _site/index.html
+          ! grep -q '15 min riassetto' _site/index.html
+          ! grep -q '1h45 + 15 min' _site/index.html
           grep -q 'coverRange' _site/index.html
           grep -q 'IDEALE' _site/index.html
           grep -q 'Menu disponibile' _site/index.html
