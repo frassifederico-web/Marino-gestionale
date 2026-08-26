@@ -1,0 +1,67 @@
+/* MARINO UI Refresh — solo presentazione, nessuna logica applicativa */
+:root{
+  --ui-bg:#f6f8fb;
+  --ui-surface:#ffffff;
+  --ui-ink:#17324d;
+  --ui-muted:#718096;
+  --ui-line:#e8edf3;
+  --ui-blue:#0b4f87;
+  --ui-blue-2:#083b66;
+  --ui-gold:#d4b35d;
+  --ui-radius:18px;
+  --ui-shadow:0 10px 30px rgba(15,55,88,.08);
+  --ui-shadow-soft:0 4px 14px rgba(15,55,88,.06);
+}
+html{background:var(--ui-bg)}
+body{background:var(--ui-bg);color:var(--ui-ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:-.01em}
+header{background:rgba(255,255,255,.96)!important;border-bottom:1px solid var(--ui-line)!important;box-shadow:0 3px 18px rgba(20,50,80,.05)!important;backdrop-filter:saturate(160%) blur(14px);-webkit-backdrop-filter:saturate(160%) blur(14px)}
+header h1{letter-spacing:-.025em!important;color:var(--ui-blue-2)!important}
+.sub,.muted{color:var(--ui-muted)!important}
+.wrap{max-width:1180px;margin:0 auto}
+.card{background:var(--ui-surface)!important;border:1px solid var(--ui-line)!important;border-radius:var(--ui-radius)!important;box-shadow:var(--ui-shadow-soft)!important}
+.card h3{color:var(--ui-blue-2)!important;letter-spacing:-.02em}
+.stat{background:linear-gradient(180deg,#fff,#fbfcfe)!important;border:1px solid var(--ui-line)!important;border-radius:16px!important;box-shadow:none!important}
+.stat b{color:var(--ui-blue-2)!important}
+button,.primary,.secondary,.danger{font-weight:750!important;border-radius:13px!important;letter-spacing:-.01em!important}
+.primary{background:linear-gradient(180deg,var(--ui-blue),var(--ui-blue-2))!important;border-color:var(--ui-blue-2)!important;box-shadow:0 5px 14px rgba(11,79,135,.18)!important}
+.secondary{background:#fff!important;border:1px solid #dbe4ed!important;color:var(--ui-blue-2)!important}
+.danger{box-shadow:none!important}
+input,select,textarea{background:#fff!important;border:1px solid #dbe4ed!important;border-radius:13px!important;box-shadow:0 1px 0 rgba(0,0,0,.015)!important;color:var(--ui-ink)!important}
+input:focus,select:focus,textarea:focus{outline:none!important;border-color:#7aa7cc!important;box-shadow:0 0 0 3px rgba(11,79,135,.10)!important}
+.tabs{background:rgba(255,255,255,.96)!important;border-top:1px solid var(--ui-line)!important;box-shadow:0 -10px 24px rgba(20,50,80,.06)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.tabs button{background:transparent!important;color:#6b7f92!important;border:0!important}
+.tabs button.active{background:#edf5fb!important;color:var(--ui-blue-2)!important;box-shadow:inset 0 0 0 1px #d9e8f4!important}
+.table{background:#fff!important;border-width:1px!important;box-shadow:0 3px 10px rgba(20,50,80,.05)!important;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease!important}
+.table:not(:disabled):active{transform:scale(.985)!important}
+.table.selected{box-shadow:0 0 0 3px rgba(11,79,135,.13),0 5px 14px rgba(20,50,80,.08)!important}
+.idealTable{border-color:#79aa86!important;background:linear-gradient(180deg,#fbfffc,#f4fbf6)!important}
+.busy{opacity:.62!important;filter:saturate(.75)}
+.forceTurn{background:#fff8ec!important;border-color:#e8bd78!important;color:#7a4b11!important}
+.rebook{background:#faf7ff!important}
+.coverRange{font-size:12px!important;color:#556b7e!important}.tableAdvice{background:#eef5fb!important;color:var(--ui-blue-2)!important;border:1px solid #dae9f5!important}
+.selectionSummary{background:#f8fbfe!important;border:1px solid #dceaf4!important;border-radius:15px!important;box-shadow:none!important}
+.bookingRow{border-bottom:1px solid var(--ui-line)!important}
+.bookingTime{display:inline-block;background:#edf5fb;color:var(--ui-blue-2);padding:3px 7px;border-radius:8px;font-variant-numeric:tabular-nums}
+.turnLink{border:1px solid transparent!important}.prevTurn{background:#f4f6f8!important;border-color:#e8edf2!important}.nextTurn{background:#f6f2fb!important;border-color:#e7dcf2!important}.forcedTurnLink{background:#fff6e8!important;border-color:#efd5a8!important}
+.menuIntro{background:linear-gradient(135deg,#f4f9fd,#fff)!important;border-color:#dfeaf3!important}
+.menuSection{overflow:hidden}.menuSection>h3{font-size:17px!important;border-bottom:1px solid var(--ui-line)!important;padding-bottom:10px!important}.menuDish{border-bottom:1px solid #eef2f6!important}.menuDish:last-child{border-bottom:0!important}.dishPrice{color:var(--ui-blue-2)!important;font-variant-numeric:tabular-nums}
+.modal{background:rgba(13,31,48,.34)!important;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.modal .box{background:#f8fafc!important;box-shadow:0 24px 70px rgba(9,33,54,.24)!important}
+.badge{background:#edf5fb!important;color:var(--ui-blue-2)!important;border:1px solid #d9e9f5!important}
+@media(max-width:720px){
+  body{background:#f7f9fb!important}
+  header{padding-top:max(9px,env(safe-area-inset-top))!important}
+  .wrap{padding:10px 10px calc(96px + env(safe-area-inset-bottom))!important}
+  .card{border-radius:17px!important;padding:13px!important;margin-bottom:11px!important;box-shadow:0 3px 12px rgba(20,50,80,.045)!important}
+  .grid4{gap:8px!important}.stat{padding:10px!important}.stat b{font-size:20px!important}
+  .tabs{padding-bottom:max(7px,env(safe-area-inset-bottom))!important}
+  .tabs button{min-height:44px!important;font-size:10.5px!important}
+  .modal .box{background:#f8fafc!important;padding-left:11px!important;padding-right:11px!important}
+  #picker{gap:9px!important}
+  #picker .table{min-height:108px!important;border-radius:15px!important;padding:10px 8px!important}
+  #picker .table b{font-size:14.5px!important}
+  .bookingHead{gap:10px!important}.bookingHead h3{font-size:19px!important}.bookingHead .primary{white-space:nowrap!important}
+  #bookingList .bookingRow{background:#fff!important;border:1px solid var(--ui-line)!important;border-radius:15px!important;padding:12px!important;margin-bottom:9px!important;box-shadow:0 3px 10px rgba(20,50,80,.035)!important}
+  .dishHead{align-items:flex-start!important}.dishPrice{font-size:14px!important}
+}
+@media(min-width:721px){.card:hover{box-shadow:var(--ui-shadow)!important}}
