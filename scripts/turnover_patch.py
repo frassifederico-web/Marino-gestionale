@@ -9,11 +9,16 @@ new_bookings=r'''function renderBookings(){
   const TURN=15,STD=105;
   const mins=v=>{let x=hhmm(v).split(':');return x.length===2?Number(x[0])*60+Number(x[1]):null};
   const fmt=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  const serviceClose=r=>String(r.service_code||'').includes('pranzo')?900:1380;
   function shared(a,b){let ac=tableCodesForRes(a.id),bc=tableCodesForRes(b.id);return ac.filter(x=>bc.includes(x))}
   function availableFrom(r,code){
     let start=mins(r.arrival_time);
     let end=Math.max(mins(r.expected_end_time)||0,start+STD);
-    return '<div class="availabilityWindow"><b>'+esc(code)+'</b> · Tavolo prenotabile dalle ore <b>'+fmt(end+TURN)+'</b></div>';
+    let freeFrom=end+TURN;
+    let next=[...ordered].filter(x=>x.id!==r.id&&tableCodesForRes(x.id).includes(code)&&mins(x.arrival_time)>start).sort((a,b)=>mins(a.arrival_time)-mins(b.arrival_time))[0]||null;
+    let limit=next?mins(next.arrival_time):serviceClose(r);
+    if(freeFrom+STD+TURN>limit)return '';
+    return '<div class="availabilityWindow"><b>'+esc(code)+'</b> · Tavolo prenotabile dalle ore <b>'+fmt(freeFrom)+'</b></div>';
   }
   $('bookingList').innerHTML=ordered.map((r,i)=>{
     let prev=null,next=null,prevTables=[],nextTables=[];
@@ -21,7 +26,7 @@ new_bookings=r'''function renderBookings(){
     for(let j=i+1;j<ordered.length;j++){let sh=shared(r,ordered[j]);if(sh.length){next=ordered[j];nextTables=sh;break}}
     let chain='';
     if(prev)chain+='<div class="turnLink prevTurn">← Turno precedente '+hhmm(prev.arrival_time)+' · '+esc(prev.guest_name)+' · '+esc(prevTables.join(', '))+'</div>';
-    if(next){let gap=tm(next.arrival_time)-tm(r.arrival_time),forced=gap>=105&&gap<120;chain+='<div class="turnLink '+(forced?'forcedTurnLink':'nextTurn')+'">→ Prossimo '+hhmm(next.arrival_time)+' · '+esc(next.guest_name)+' · '+esc(nextTables.join(', '))+(forced?' · 1h30 + 15 min riassetto':'')+'</div>'}
+    if(next)chain+='<div class="turnLink nextTurn">→ Prossimo '+hhmm(next.arrival_time)+' · '+esc(next.guest_name)+' · '+esc(nextTables.join(', '))+'</div>';
     let windows=tableCodesForRes(r.id).map(c=>availableFrom(r,c)).join('');
     return '<div class="row bookingRow"><div><b><span class="bookingTime">'+hhmm(r.arrival_time)+'</span> · '+esc(r.guest_name)+' · '+r.party_size+' coperti'+(r.forced?' · ⚠ FORZATA':'')+'</b><div class="muted">'+(r.expected_end_time?'Fine '+hhmm(r.expected_end_time)+' · ':'')+esc(tableLabelsForRes(r.id))+' · '+r.area+'</div>'+chain+windows+'</div><div class="actions"><button class="secondary" data-edit-booking="'+esc(r.id)+'">Modifica</button><button class="danger" data-delete-booking="'+esc(r.id)+'">Elimina</button></div></div>'
   }).join('')||'<div class="muted">Nessuna prenotazione.</div>';
@@ -47,7 +52,7 @@ new_picker=r'''function renderPicker(){
   $('picker').innerHTML=roomTables.map(o=>{
     let {t,busy,forceOnly,used,mn,mx,fit,oversize}=o;
     let cl=busy?'busy':forceOnly?'forceTurn':used?'rebook':'free';if(selected.includes(t.code))cl+=' selected';if(fit&&!busy)cl+=' idealTable';
-    let state=busy?'Occupato / riassetto':forceOnly?'Forzabile: 1h30 + 15 min':used?'Rimpiazzabile: 1h45 + 15 min':'Libero';
+    let state=busy?'Occupato':forceOnly?'Forzabile':used?'Rimpiazzabile':'Libero';
     let advice=fit?'IDEALE':oversize?'Tavolo grande':'Disponibile';
     return '<button type="button" class="table '+cl+'" '+(busy?'disabled aria-disabled="true"':'data-table-code="'+esc(t.code)+'"')+'><b>'+esc(t.label)+'</b><div class="coverRange">'+mn+'–'+mx+' coperti</div><div class="tableAdvice">'+advice+'</div><div class="muted">'+state+'</div></button>'
   }).join('');
