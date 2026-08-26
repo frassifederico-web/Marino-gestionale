@@ -65,6 +65,13 @@ jobs:
           if n!=1:
               raise SystemExit(f'renderPicker non sostituito: {n}')
 
+          # Nuova prenotazione anche dalla pagina Prenotazioni.
+          old_bookings='<section id="bookings" class="page"><div class="card"><h3>Prenotazioni</h3><div id="bookingList"></div></div></section>'
+          new_bookings='<section id="bookings" class="page"><div class="card"><div class="actions" style="justify-content:space-between;align-items:center"><h3 style="margin:0">Prenotazioni</h3><button class="primary" onclick="openBooking()">+ Nuova prenotazione</button></div><div id="bookingList" style="margin-top:10px"></div></div></section>'
+          if old_bookings not in s:
+              raise SystemExit('Sezione Prenotazioni attesa non trovata')
+          s=s.replace(old_bookings,new_bookings,1)
+
           s=s.replace('<section id="menu" class="page"><div class="card"><h3>Menu di servizio</h3>', '<section id="menu" class="page"><div class="card" id="menuEditor"><h3>Gestione menu</h3>',1)
           s=s.replace('<section id="access" class="page"><div class="card"><h3>Accessi</h3>', '<section id="access" class="page"><div class="card"><h3>Accessi e amministrazione</h3><div id="menuAdminSlot"></div>',1)
 
@@ -126,6 +133,8 @@ jobs:
           grep -q 'Rimpiazzabile' _site/index.html
           grep -q 'menuAdminSlot' _site/index.html
           grep -q 'Menu disponibile' _site/index.html
+          grep -q '<section id="bookings"' _site/index.html
+          grep -q '+ Nuova prenotazione' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
