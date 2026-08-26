@@ -20,7 +20,7 @@ new_bookings=r'''function renderBookings(){
     let beforeStart=prev?occEnd(prev)+TURN:open;
     let beforeLast=ra-STD-TURN;
     let afterStart=occEnd(r)+TURN;
-    let afterLast=(next?mins(next.arrival_time)-STD-TURN:close-STD);
+    let afterLast=next?mins(next.arrival_time)-STD-TURN:close-STD;
     let bits=[];
     if(beforeStart<=beforeLast)bits.push('Prima: '+fmt(beforeStart)+'–'+fmt(beforeLast)+' (ultima entrata)');
     else bits.push('Prima: nessuna finestra utile');
@@ -77,4 +77,3 @@ css='''<style id="marino-turnover-ui">
 </style>'''
 s=s.replace('</head>',css+'</head>',1)
 p.write_text(s)
-'''
