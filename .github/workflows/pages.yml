@@ -56,7 +56,19 @@ jobs:
           s=s.replace('</head>', css+'\n</head>', 1)
           p.write_text(s)
           PY
-          node --check /tmp/marino-module.mjs
+          python scripts/app_ready_patch.py
+          cp pwa/manifest.webmanifest _site/manifest.webmanifest
+          cp pwa/sw.js _site/sw.js
+          cp pwa/icon.svg _site/icon.svg
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('_site/index.html').read_text()
+          m=re.search(r'<script type="module">(.*?)</script>',s,re.S)
+          if not m: raise SystemExit('modulo JS finale non trovato')
+          Path('/tmp/marino-module-final.mjs').write_text(m.group(1))
+          PY
+          node --check /tmp/marino-module-final.mjs
           grep -q 'type="module"' _site/index.html
           grep -q 'tableSelectionSummary' _site/index.html
           grep -q 'Prossimo' _site/index.html
@@ -89,6 +101,13 @@ jobs:
           grep -q 'Pren. #' _site/index.html
           grep -q 'marino-map-details-v2' _site/index.html
           grep -q 'Area secondaria non attiva' _site/index.html
+          grep -q 'rel="manifest"' _site/index.html
+          grep -q 'backupPanel' _site/index.html
+          grep -q 'Crea backup ora' _site/index.html
+          grep -q 'navigator.serviceWorker.register' _site/index.html
+          test -f _site/manifest.webmanifest
+          test -f _site/sw.js
+          test -f _site/icon.svg
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
