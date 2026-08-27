@@ -40,8 +40,8 @@ new_fn=r'''function enhanceMapBookings(){
   }catch(e){console.warn('Mappa prenotazioni:',e)}
 }'''
 
-s,n=re.subn(r"function enhanceMapBookings\(\)\{.*?\n\}
-function renderMap\(\)",new_fn+'\nfunction renderMap()',s,count=1,flags=re.S)
+pattern=r'''function enhanceMapBookings\(\)\{.*?\n\}\nfunction renderMap\(\)'''
+s,n=re.subn(pattern,new_fn+'\nfunction renderMap()',s,count=1,flags=re.S)
 if n!=1:
     raise SystemExit(f'enhanceMapBookings non sostituita: {n}')
 
