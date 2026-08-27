@@ -85,6 +85,19 @@ s=s.replace("emailRedirectTo:location.href.split('#')[0]", f"emailRedirectTo:'{p
 if prod_redirect not in s:
     raise SystemExit('Redirect produzione MARINO non applicato')
 
+# Forzatura esplicita per combinazioni tavoli non consecutive/non standard.
+old_force="if(!force&&(t.includes('massima')||t.includes('Capienza servizio superata')||t.toLowerCase().includes('forzatura'))){if(confirm(t+'\\n\\nVuoi comunque forzare questa prenotazione?'))return saveBooking(true)}"
+new_force="if(!force&&(t.includes('massima')||t.includes('Capienza servizio superata')||t.toLowerCase().includes('forzatura')||t.toLowerCase().includes('non sono consecutivi')||t.toLowerCase().includes('associarli comunque'))){let q=(t.toLowerCase().includes('non sono consecutivi')||t.toLowerCase().includes('associarli comunque'))?'I tavoli selezionati non sono consecutivi. Vuoi associarli comunque?':t+'\\n\\nVuoi comunque forzare questa prenotazione?';if(confirm(q))return saveBooking(true)}"
+if old_force not in s:
+    raise SystemExit('Blocco conferma forzatura non trovato')
+s=s.replace(old_force,new_force,1)
+
+# Indicazione chiara nel form prenotazione.
+needle="Rimpiazzo standard: almeno 1h45 tra gli utilizzi dello stesso tavolo. Tra 1h30 e 1h44 il tavolo è forzabile con conferma. Sotto 1h30 resta incompatibile."
+repl=needle+" Puoi anche associare tavoli non consecutivi o combinazioni non standard: il sistema chiederà conferma prima del salvataggio."
+if needle in s:
+    s=s.replace(needle,repl,1)
+
 css='''<style id="marino-app-ready">\n#backupPanel h3{color:var(--marino-blue,#063f78)}\n#backupPanel .row{align-items:flex-start}\n@media(max-width:720px){#backupPanel .actions{width:100%}#backupPanel button{min-height:44px}}\n</style>'''
 s=s.replace('</head>',css+'</head>',1)
 
