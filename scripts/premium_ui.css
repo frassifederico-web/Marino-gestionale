@@ -69,6 +69,8 @@ label{color:#294a64!important}
   .wrap{padding:10px 9px calc(92px + env(safe-area-inset-bottom))!important}
   .card{border-radius:18px!important;padding:13px!important;margin-bottom:10px!important;box-shadow:0 5px 16px rgba(7,49,84,.065)!important}
   .grid4{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.stat{min-height:78px!important;padding:10px 11px!important}.stat b{font-size:23px!important;margin-top:4px!important}
+  /* Home: il campo data occupa circa due terzi della sua colonna, evitando sovrapposizioni con Servizio */
+  #day #date{width:66.666%!important;max-width:66.666%!important;min-width:0!important}
   .tabs{position:fixed!important;left:8px!important;right:8px!important;bottom:8px!important;border:1px solid rgba(6,63,120,.12)!important;border-radius:20px!important;background:rgba(255,255,255,.96)!important;box-shadow:0 10px 32px rgba(3,47,92,.20)!important;padding:7px 6px max(7px,env(safe-area-inset-bottom))!important;z-index:90!important;gap:2px!important}
   .tabs button{min-width:0!important;min-height:54px!important;padding:6px 3px!important;border-radius:14px!important;font-size:9.5px!important;flex:1 1 20%!important}
   .tabs button::before{font-size:20px!important;margin-bottom:4px!important}
