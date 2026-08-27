@@ -57,6 +57,16 @@ jobs:
           p.write_text(s)
           PY
           python scripts/app_ready_patch.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_site/index.html')
+          css=Path('scripts/premium_ui.css').read_text()
+          s=p.read_text()
+          if '</head>' not in s:
+              raise SystemExit('head non trovato per premium UI')
+          s=s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1)
+          p.write_text(s)
+          PY
           cp pwa/manifest.webmanifest _site/manifest.webmanifest
           cp pwa/sw.js _site/sw.js
           cp pwa/icon.svg _site/icon.svg
@@ -86,6 +96,7 @@ jobs:
           grep -q '@media(max-width:720px)' _site/index.html
           grep -q 'marino-ui-refresh' _site/index.html
           grep -q 'marino-mobile-override' _site/index.html
+          grep -q 'marino-premium-ui' _site/index.html
           grep -q 'SF Pro Text' _site/index.html
           grep -q 'mapBookingSlots' _site/index.html
           grep -q 'mapBookingName' _site/index.html
