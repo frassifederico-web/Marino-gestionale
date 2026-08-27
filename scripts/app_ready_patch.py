@@ -79,6 +79,12 @@ marker='(async()=>{let s=(await db.auth.getSession()).data.session;if(s)afterAut
 if marker in s and 'navigator.serviceWorker.register' not in s:
     s=s.replace(marker,boot+marker,1)
 
+# In produzione il redirect Auth deve essere stabile e non dipendere da querystring/cache-buster.
+prod_redirect="https://frassifederico-web.github.io/Marino-gestionale/"
+s=s.replace("emailRedirectTo:location.href.split('#')[0]", f"emailRedirectTo:'{prod_redirect}'", 1)
+if prod_redirect not in s:
+    raise SystemExit('Redirect produzione MARINO non applicato')
+
 css='''<style id="marino-app-ready">\n#backupPanel h3{color:var(--marino-blue,#063f78)}\n#backupPanel .row{align-items:flex-start}\n@media(max-width:720px){#backupPanel .actions{width:100%}#backupPanel button{min-height:44px}}\n</style>'''
 s=s.replace('</head>',css+'</head>',1)
 
