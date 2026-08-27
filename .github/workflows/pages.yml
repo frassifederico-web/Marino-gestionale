@@ -111,7 +111,8 @@ jobs:
           grep -q 'mapBookingNo' _site/index.html
           grep -q 'Pren. #' _site/index.html
           grep -q 'marino-map-details-v2' _site/index.html
-          grep -q 'Area secondaria non attiva' _site/index.html
+          grep -q "t.toLowerCase().includes('forzatura')" _site/index.html
+          grep -q 'I tavoli selezionati non sono consecutivi. Vuoi associarli comunque?' _site/index.html
           grep -q 'rel="manifest"' _site/index.html
           grep -q 'backupPanel' _site/index.html
           grep -q 'Crea backup ora' _site/index.html
