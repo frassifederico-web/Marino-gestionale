@@ -34,6 +34,7 @@ jobs:
           python scripts/map_cards_patch.py
           python scripts/presence_patch.py
           python scripts/reservation_number_patch.py
+          python scripts/map_details_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -84,6 +85,8 @@ jobs:
           grep -q 'reservationDisplayNo' _site/index.html
           grep -q 'reservationNo' _site/index.html
           grep -q 'mapBookingNo' _site/index.html
+          grep -q 'Pren. #' _site/index.html
+          grep -q 'marino-map-details-v2' _site/index.html
           touch _site/.nojekyll
       - name: Configura Pages
         uses: actions/configure-pages@v5
