@@ -1,0 +1,14 @@
+{
+  "name": "MARINO — Gestionale",
+  "short_name": "MARINO",
+  "description": "Gestionale prenotazioni MARINO",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff3c4",
+  "theme_color": "#063f78",
+  "icons": [
+    {"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
