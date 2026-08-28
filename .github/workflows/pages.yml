@@ -57,6 +57,7 @@ jobs:
           p.write_text(s)
           PY
           python scripts/app_ready_patch.py
+          python scripts/internal_layout_aug28_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -113,6 +114,11 @@ jobs:
           grep -q 'marino-map-details-v2' _site/index.html
           grep -q "t.toLowerCase().includes('forzatura')" _site/index.html
           grep -q 'I tavoli selezionati non sono consecutivi. Vuoi associarli comunque?' _site/index.html
+          grep -q 'B5+B6 = 4 POSTI' _site/index.html
+          grep -q 'Bancone 5 e Bancone 6 normalmente formano un unico tavolo da 4' _site/index.html
+          grep -q 'marino-layout-aug28' _site/index.html
+          grep -q 'Math.min(14,2\*n+2)' _site/index.html
+          grep -q 'Math.min(16,pm+2\*qc)' _site/index.html
           grep -q 'rel="manifest"' _site/index.html
           grep -q 'backupPanel' _site/index.html
           grep -q 'Crea backup ora' _site/index.html
