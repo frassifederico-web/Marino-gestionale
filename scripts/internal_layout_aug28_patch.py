@@ -8,7 +8,7 @@ s=p.read_text()
 new_range=r'''function selectionRange(){
   let ts=allTables.filter(t=>selected.includes(t.code));
   if(!ts.length)return null;
-  let n=ts.length,codes=ts.map(t=>t.code),groups=ts.map(t=>t.group_name||'');
+  let n=ts.length,groups=ts.map(t=>t.group_name||'');
   if(ts[0]?.area==='dehors'){
     if(n===1)return {mn:1,mx:4};
     if(n===2)return {mn:4,mx:6};
@@ -40,22 +40,11 @@ function renderSelectionSummary'''
 s,n=re.subn(r"function selectionRange\(\)\{.*?\}\s*function renderSelectionSummary",new_range,s,count=1,flags=re.S)
 if n!=1: raise SystemExit(f'selectionRange non sostituito: {n}')
 
-# Aggiunge il messaggio di forzatura nel riepilogo selezione.
+# Messaggio di forzatura nel riepilogo selezione.
 old="let ok=party>=r.mn&&party<=r.mx;el.innerHTML='<div class=\"selectionLine\"><b>'+selected.map(c=>{let t=allTables.find(x=>x.code===c);return esc(t?.label||c)}).join(' + ')+'</b><span class=\"badge\">'+r.mn+'–'+r.mx+' coperti</span></div><div class=\"'+(ok?'ok':'warn')+'\">'+(ok?'La selezione copre i '+party+' coperti richiesti.':'Controlla la selezione: '+party+' coperti richiesti, capacità indicativa '+r.mn+'–'+r.mx+'. Le regole definitive vengono sempre verificate al salvataggio.')+'</div>'"
 new="let ok=party>=r.mn&&party<=r.mx,hint=selectionForceHint();el.innerHTML='<div class=\"selectionLine\"><b>'+selected.map(c=>{let t=allTables.find(x=>x.code===c);return esc(t?.label||c)}).join(' + ')+'</b><span class=\"badge\">'+r.mn+'–'+r.mx+' coperti</span></div><div class=\"'+(ok?'ok':'warn')+'\">'+(ok?'La selezione copre i '+party+' coperti richiesti.':'Controlla la selezione: '+party+' coperti richiesti, capacità indicativa '+r.mn+'–'+r.mx+'. Le regole definitive vengono sempre verificate al salvataggio.')+'</div>'+(hint?'<div class=\"warn layoutForceHint\">'+hint+'</div>':'')"
 if old not in s: raise SystemExit('renderSelectionSummary atteso non trovato')
 s=s.replace(old,new,1)
-
-# Nel picker B5/B6 non vengono proposti come IDEALE singolarmente: la configurazione standard è B5+B6 da 4.
-old_picker="let mn=Number(t.single_min_covers||1),mx=Number(t.single_max_covers||1),fit=party>=mn&&party<=mx,oversize=party>0&&party<mn;let score=(busy?1000:0)+(forceOnly?200:0)+(fit?0:oversize?80+(mn-party):40+Math.abs(party-mx));return {t,busy,forceOnly,used,mn,mx,fit,oversize,score}"
-new_picker="let mn=Number(t.single_min_covers||1),mx=Number(t.single_max_covers||1),split56=(t.code==='B5'||t.code==='B6'),fit=party>=mn&&party<=mx&&!split56,oversize=party>0&&party<mn;let score=(busy?1000:0)+(forceOnly?200:0)+(split56?120:0)+(fit?0:oversize?80+(mn-party):40+Math.abs(party-mx));return {t,busy,forceOnly,used,mn,mx,fit,oversize,score,split56}"
-if old_picker not in s: raise SystemExit('Calcolo picker tavoli non trovato')
-s=s.replace(old_picker,new_picker,1)
-
-old_card="let {t,busy,forceOnly,used,mn,mx,fit,oversize}=o;let cl=busy?'busy':forceOnly?'forceTurn':used?'rebook':'free';if(selected.includes(t.code))cl+=' selected';if(fit&&!busy)cl+=' idealTable';let state=busy?'Occupato':forceOnly?'Forzabile 1h30':used?'Rimpiazzabile 1h45':'Libero';let advice=fit?'IDEALE':oversize?'Tavolo grande':'Disponibile';"
-new_card="let {t,busy,forceOnly,used,mn,mx,fit,oversize,split56}=o;let cl=busy?'busy':forceOnly?'forceTurn':used?'rebook':'free';if(selected.includes(t.code))cl+=' selected';if(fit&&!busy)cl+=' idealTable';let state=busy?'Occupato':forceOnly?'Forzabile 1h30':used?'Rimpiazzabile 1h45':'Libero';let advice=split56?'B5+B6 = 4 POSTI':fit?'IDEALE':oversize?'Tavolo grande':'Disponibile';"
-if old_card not in s: raise SystemExit('Card picker tavoli non trovata')
-s=s.replace(old_card,new_card,1)
 
 # Conferma dedicata quando si separa B5/B6.
 old_q="let q=(t.toLowerCase().includes('non sono consecutivi')||t.toLowerCase().includes('associarli comunque'))?'I tavoli selezionati non sono consecutivi. Vuoi associarli comunque?':t+'\\n\\nVuoi comunque forzare questa prenotazione?';"
