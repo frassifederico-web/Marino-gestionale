@@ -12,11 +12,14 @@ if old not in s:
 s=s.replace(old,new,1)
 
 # Conferma immediata e specifica per 4 coperti su un singolo Quadrato.
-needle="async function saveBooking(force){$('saveMsg').style.display='none';"
-repl="async function saveBooking(force){$('saveMsg').style.display='none';if(!force&&selected.length===1&&selected[0].startsWith('PQ')&&Number($('party').value)===4){if(confirm('Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?'))return saveBooking(true);return;}"
-if needle not in s:
-    raise SystemExit('saveBooking non trovato')
-s=s.replace(needle,repl,1)
+if 'Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?' not in s:
+    s,n=re.subn(
+        r"async\s+function\s+saveBooking\s*\(\s*force\s*\)\s*\{",
+        "async function saveBooking(force){if(!force&&selected.length===1&&selected[0].startsWith('PQ')&&Number($('party').value)===4){if(confirm('Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?'))return saveBooking(true);return;}",
+        s,count=1
+    )
+    if n!=1:
+        raise SystemExit('saveBooking non trovato')
 
 # Riepilogo ancora più esplicito quando viene selezionato un Quadrato con 4 coperti.
 s=s.replace("⚠ 4 persone su un solo Quadrato richiedono conferma di forzatura.","⚠ 4 coperti su un solo Quadrato: forzatura consentita con conferma.",1)
