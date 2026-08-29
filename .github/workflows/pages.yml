@@ -59,6 +59,7 @@ jobs:
           python scripts/app_ready_patch.py
           python scripts/internal_layout_aug28_patch.py
           python scripts/password_recovery_patch.py
+          python scripts/auth_stability_patch.py
           python scripts/manual_table_move_patch.py
           python scripts/history_mode_patch.py
           python scripts/square_force_4_patch.py
@@ -127,6 +128,12 @@ jobs:
           grep -q 'completePasswordRecovery' _site/index.html
           grep -q 'PASSWORD_RECOVERY' _site/index.html
           grep -q 'marino-password-recovery' _site/index.html
+          grep -q 'loadAuthorizedProfile' _site/index.html
+          grep -q 'authBootPromise' _site/index.html
+          grep -q 'TOKEN_REFRESHED' _site/index.html
+          grep -q 'marino-auth-stability' _site/index.html
+          grep -q 'persistSession:true' _site/index.html
+          grep -q 'autoRefreshToken:true' _site/index.html
           grep -q 'Sposta tavolo' _site/index.html
           grep -q 'moveBookingTable' _site/index.html
           grep -q 'marino-manual-table-move' _site/index.html
