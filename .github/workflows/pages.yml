@@ -60,6 +60,7 @@ jobs:
           python scripts/internal_layout_aug28_patch.py
           python scripts/password_recovery_patch.py
           python scripts/manual_table_move_patch.py
+          python scripts/history_mode_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -128,6 +129,11 @@ jobs:
           grep -q 'Sposta tavolo' _site/index.html
           grep -q 'moveBookingTable' _site/index.html
           grep -q 'marino-manual-table-move' _site/index.html
+          grep -q 'historySummary' _site/index.html
+          grep -q 'ARCHIVIO STORICO' _site/index.html
+          grep -q 'marinoToday' _site/index.html
+          grep -q 'isPastServiceDate' _site/index.html
+          grep -q 'marino-history-mode' _site/index.html
           grep -q 'rel="manifest"' _site/index.html
           grep -q 'backupPanel' _site/index.html
           grep -q 'Crea backup ora' _site/index.html
