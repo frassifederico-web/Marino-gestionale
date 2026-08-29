@@ -5,10 +5,12 @@ p=Path('_site/index.html')
 s=p.read_text()
 
 # Mostra chiaramente sui singoli tavoli Quadrato la capienza standard e la forzatura a 4.
-old="let state=busy?'Occupato':forceOnly?'Forzabile 1h30':used?'Rimpiazzabile 1h45':'Libero';let advice=fit?'IDEALE':oversize?'Tavolo grande':'Disponibile';return '<button type=\"button\" class=\"table '+cl+'\" '+(busy?'disabled aria-disabled=\"true\"':'data-table-code=\"'+esc(t.code)+'\"')+'><b>'+esc(t.label)+'</b><div class=\"coverRange\">'+mn+'–'+mx+' coperti</div><div class=\"tableAdvice\">'+advice+'</div><div class=\"muted\">'+state+'</div></button>'"
-new="let state=busy?'Occupato':forceOnly?'Forzabile 1h30':used?'Rimpiazzabile 1h45':'Libero';let advice=fit?'IDEALE':oversize?'Tavolo grande':'Disponibile';let coverText=(t.group_name==='quadrati'&&Number(t.single_max_covers||0)===3)?'1–3 coperti (4 forzatura)':(mn+'–'+mx+' coperti');return '<button type=\"button\" class=\"table '+cl+'\" '+(busy?'disabled aria-disabled=\"true\"':'data-table-code=\"'+esc(t.code)+'\"')+'><b>'+esc(t.label)+'</b><div class=\"coverRange\">'+coverText+'</div><div class=\"tableAdvice\">'+advice+'</div><div class=\"muted\">'+state+'</div></button>'"
+# Patch volutamente minima: modifica soltanto il testo della capienza nel picker,
+# così resta compatibile con gli altri aggiornamenti del layout.
+old="<div class=\"coverRange\">'+mn+'–'+mx+' coperti</div>"
+new="<div class=\"coverRange\">'+((t.group_name==='quadrati'&&Number(t.single_max_covers||0)===3)?'1–3 coperti (4 forzatura)':(mn+'–'+mx+' coperti'))+'</div>"
 if old not in s:
-    raise SystemExit('Blocco renderPicker per capienza tavoli non trovato')
+    raise SystemExit('Testo capienza renderPicker non trovato')
 s=s.replace(old,new,1)
 
 # Conferma immediata e specifica per 4 coperti su un singolo Quadrato.
