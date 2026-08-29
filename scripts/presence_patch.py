@@ -37,7 +37,12 @@ new_bookings=r'''function renderBookings(){
     let actions='';
     if(r.status==='confermata'){
       actions+='<button class="secondary" data-edit-booking="'+esc(r.id)+'">Modifica</button>';
-      actions+=r.arrived_at?'<button class="releaseBtn" data-release-booking="'+esc(r.id)+'">Libera tavolo</button>':'<button class="arriveBtn" data-arrive-booking="'+esc(r.id)+'">Cliente arrivato</button>';
+      if(r.arrived_at){
+        actions+='<button class="secondary undoArriveBtn" data-unarrive-booking="'+esc(r.id)+'">Non arrivato</button>';
+        actions+='<button class="releaseBtn" data-release-booking="'+esc(r.id)+'">Libera tavolo</button>';
+      }else{
+        actions+='<button class="arriveBtn" data-arrive-booking="'+esc(r.id)+'">Cliente arrivato</button>';
+      }
       actions+='<button class="danger" data-delete-booking="'+esc(r.id)+'">Elimina</button>';
     }else{
       actions+='<button class="danger" data-delete-booking="'+esc(r.id)+'">Elimina</button>';
@@ -47,6 +52,7 @@ new_bookings=r'''function renderBookings(){
   $('bookingList').querySelectorAll('[data-edit-booking]').forEach(b=>b.addEventListener('click',()=>editBooking(b.dataset.editBooking)));
   $('bookingList').querySelectorAll('[data-delete-booking]').forEach(b=>b.addEventListener('click',()=>delBooking(b.dataset.deleteBooking)));
   $('bookingList').querySelectorAll('[data-arrive-booking]').forEach(b=>b.addEventListener('click',()=>markArrived(b.dataset.arriveBooking)));
+  $('bookingList').querySelectorAll('[data-unarrive-booking]').forEach(b=>b.addEventListener('click',()=>unmarkArrived(b.dataset.unarriveBooking)));
   $('bookingList').querySelectorAll('[data-release-booking]').forEach(b=>b.addEventListener('click',()=>releaseBooking(b.dataset.releaseBooking)));
 }'''
 s,n=re.subn(r"function renderBookings\(\)\{.*?\}\s*function _renderMapBase",new_bookings+'\nfunction _renderMapBase',s,count=1,flags=re.S)
@@ -60,12 +66,19 @@ s=s.replace("slot.className='mapBookingSlot';",
 s=s.replace("slot.innerHTML='<div class=\"mapBookingTime\">'+esc(hhmm(r.arrival_time))+'</div><div class=\"mapBookingName\">'+esc(r.guest_name||'—')+'</div><div class=\"mapBookingCovers\">'+Number(r.party_size||0)+' cop.</div>';",
             "slot.innerHTML=(r.arrived_at?'<span class=\"arrivedCross\" aria-label=\"Cliente arrivato\">×</span>':'')+'<div class=\"mapBookingTime\">'+esc(hhmm(r.arrival_time))+'</div><div class=\"mapBookingName\">'+esc(r.guest_name||'—')+'</div><div class=\"mapBookingCovers\">'+Number(r.party_size||0)+' cop.</div>';",1)
 
-# Azioni di presenza: la prenotazione resta confermata all'arrivo; liberandola diventa completata.
+# Azioni di presenza: l'arrivo è reversibile; liberando il tavolo la prenotazione diventa completata.
 marker="async function delBooking(id){"
 if marker not in s: raise SystemExit('delBooking non trovata')
 presence=r'''async function markArrived(id){
   let r=reservations.find(x=>x.id===id);if(!r||r.status!=='confermata')return;
   let q=await db.from('reservations').update({arrived_at:new Date().toISOString(),updated_by:profile.user_id}).eq('id',id);
+  if(q.error)return alert(q.error.message);
+  await loadAll();
+}
+async function unmarkArrived(id){
+  let r=reservations.find(x=>x.id===id);if(!r||r.status!=='confermata'||!r.arrived_at)return;
+  if(!confirm('Segnare nuovamente questo cliente come NON ARRIVATO?'))return;
+  let q=await db.from('reservations').update({arrived_at:null,updated_by:profile.user_id}).eq('id',id);
   if(q.error)return alert(q.error.message);
   await loadAll();
 }
@@ -83,9 +96,9 @@ css=r'''
 <style id="marino-presence-ui">
 .presenceBadge{display:inline-block;margin-left:6px;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:950;letter-spacing:.04em;vertical-align:1px}
 .arrivedBadge{background:#d9dde1;color:#39434d;border:1px solid #9aa3ab}.completedBadge{background:#edf0f2;color:#65717a;border:1px solid #c6cdd2}
-.arriveBtn{background:#e1e5e8;color:#34404a;border:1px solid #aeb6bd}.releaseBtn{background:#fff4d7;color:#704c00;border:1px solid #d7aa32}.completedBooking{opacity:.68}
+.arriveBtn{background:#e1e5e8;color:#34404a;border:1px solid #aeb6bd}.undoArriveBtn{background:#eef2f5;color:#34404a;border:1px solid #aeb6bd}.releaseBtn{background:#fff4d7;color:#704c00;border:1px solid #d7aa32}.completedBooking{opacity:.68}
 .mapBookingSlot.customerArrived{position:relative;background:#e3e6e8!important}.arrivedCross{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:46px;line-height:1;font-weight:500;color:rgba(79,87,94,.42);pointer-events:none;z-index:0}.customerArrived .mapBookingTime,.customerArrived .mapBookingName,.customerArrived .mapBookingCovers{position:relative;z-index:1}
-@media(max-width:720px){.arrivedCross{font-size:42px}.presenceBadge{display:inline-block;margin:5px 0 0 5px}.arriveBtn,.releaseBtn{min-height:42px}}
+@media(max-width:720px){.arrivedCross{font-size:42px}.presenceBadge{display:inline-block;margin:5px 0 0 5px}.arriveBtn,.undoArriveBtn,.releaseBtn{min-height:42px}}
 </style>
 '''
 s=s.replace('</head>',css+'</head>',1)
