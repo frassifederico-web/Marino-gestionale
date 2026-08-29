@@ -23,23 +23,28 @@ if old_listener not in s:
 s=s.replace(old_listener,new_listener,1)
 
 # Stato dedicato allo spostamento. La modifica normale continua a usare il flusso esistente.
+# IMPORTANTE: appena si entra in Sposta tavolo la selezione viene azzerata.
+# In questo modo il tavolo precedente NON resta selezionato insieme al nuovo:
+# l'utente sceglie da zero la nuova destinazione e il salvataggio sostituisce l'associazione.
 marker="function renderMap(){"
 fn=r'''let movingOnly=null;
 function moveBookingTable(id){
   const r=reservations.find(x=>x.id===id);
   if(!r){alert('Prenotazione non trovata.');return}
+  const current=tableLabelsForRes(id)||'tavolo attuale';
   editBooking(id);
   movingOnly=id;
   $('room').disabled=true;
+  selected=[];
+  renderPicker();
   setTimeout(()=>{
     try{
-      const current=tableLabelsForRes(id)||'tavolo attuale';
       const summary=document.getElementById('tableSelectionSummary');
       if(summary){
         summary.querySelectorAll('.moveTableNotice').forEach(x=>x.remove());
         const note=document.createElement('div');
         note.className='moveTableNotice';
-        note.innerHTML='<b>Spostamento tavolo</b><div>Attuale: '+esc(current)+'. Deseleziona il tavolo attuale, scegli il nuovo tavolo e premi Salva prenotazione. Cambia solo questa prenotazione: il layout generale resta invariato.</div>';
+        note.innerHTML='<b>Spostamento tavolo</b><div>Attuale: '+esc(current)+'. Scegli il nuovo tavolo e premi Salva prenotazione. Il tavolo precedente verrà liberato automaticamente e la prenotazione resterà una sola.</div>';
         summary.prepend(note);
       }
       const picker=document.getElementById('picker');
@@ -64,7 +69,7 @@ save_marker='async function saveBooking(force){'
 move_save=r'''async function saveBooking(force){
   $('saveMsg').style.display='none';
   if(movingOnly&&editing===movingOnly){
-    if(!selected.length)return alert('Seleziona almeno un tavolo.');
+    if(!selected.length)return alert('Seleziona il nuovo tavolo.');
     let q=await db.rpc('move_reservation_tables',{p_reservation_id:editing,p_table_codes:selected,p_forced:force});
     if(q.error){
       let t=q.error.message||'';
