@@ -5,14 +5,11 @@ p=Path('_site/index.html')
 s=p.read_text()
 
 # Aggiunge il comando esplicito di spostamento alla riga azioni della prenotazione.
-# La build attuale costruisce i pulsanti tramite la variabile `actions`, quindi
-# interveniamo lì senza toccare il layout generale della sala.
 edit_action="actions+='<button class=\"secondary\" data-edit-booking=\"'+esc(r.id)+'\">Modifica</button>';"
 move_action="actions+='<button class=\"secondary moveTableBtn\" data-move-booking=\"'+esc(r.id)+'\">Sposta tavolo</button>';\n      "+edit_action
 if edit_action in s:
     s=s.replace(edit_action,move_action,1)
 else:
-    # Fallback per eventuali versioni future in cui Modifica/Elimina tornano contigui.
     old="<button class=\"secondary\" data-edit-booking=\"'+esc(r.id)+'\">Modifica</button><button class=\"danger\" data-delete-booking=\"'+esc(r.id)+'\">Elimina</button>"
     new="<button class=\"secondary moveTableBtn\" data-move-booking=\"'+esc(r.id)+'\">Sposta tavolo</button><button class=\"secondary\" data-edit-booking=\"'+esc(r.id)+'\">Modifica</button><button class=\"danger\" data-delete-booking=\"'+esc(r.id)+'\">Elimina</button>"
     if old not in s:
@@ -25,14 +22,15 @@ if old_listener not in s:
     raise SystemExit('Listener modifica prenotazione non trovato')
 s=s.replace(old_listener,new_listener,1)
 
-# Modalità dedicata: apre la prenotazione esistente con i tavoli attuali selezionati.
-# L'utente tocca il nuovo tavolo e salva: viene aggiornata solo l'associazione
-# reservation_tables della prenotazione, non la configurazione restaurant_tables.
+# Stato dedicato allo spostamento. La modifica normale continua a usare il flusso esistente.
 marker="function renderMap(){"
-fn=r'''function moveBookingTable(id){
+fn=r'''let movingOnly=null;
+function moveBookingTable(id){
   const r=reservations.find(x=>x.id===id);
   if(!r){alert('Prenotazione non trovata.');return}
   editBooking(id);
+  movingOnly=id;
+  $('room').disabled=true;
   setTimeout(()=>{
     try{
       const current=tableLabelsForRes(id)||'tavolo attuale';
@@ -53,6 +51,35 @@ if 'function moveBookingTable(id)' not in s:
     if marker not in s:
         raise SystemExit('renderMap non trovato')
     s=s.replace(marker,fn+'\n'+marker,1)
+
+# Nuova prenotazione / modifica normale: escono sempre dalla modalità spostamento.
+s=s.replace('function openBooking(){','function openBooking(){movingOnly=null;if($(\'room\'))$(\'room\').disabled=false;',1)
+s=s.replace('function editBooking(id){','function editBooking(id){movingOnly=null;if($(\'room\'))$(\'room\').disabled=false;',1)
+s=s.replace("function closeBooking(){$('modal').classList.remove('open')}","function closeBooking(){movingOnly=null;if($('room'))$('room').disabled=false;$('modal').classList.remove('open')}",1)
+
+# In modalità spostamento usa un RPC dedicato: conserva tutti i dati della prenotazione
+# e cambia soltanto l'associazione ai tavoli. Il backend riusa tutte le verifiche di
+# capienza, sovrapposizione, rimpiazzo e forzatura del salvataggio normale.
+save_marker='async function saveBooking(force){'
+move_save=r'''async function saveBooking(force){
+  $('saveMsg').style.display='none';
+  if(movingOnly&&editing===movingOnly){
+    if(!selected.length)return alert('Seleziona almeno un tavolo.');
+    let q=await db.rpc('move_reservation_tables',{p_reservation_id:editing,p_table_codes:selected,p_forced:force});
+    if(q.error){
+      let t=q.error.message||'';
+      if(!force&&(t.includes('massima')||t.includes('Capienza servizio superata')||t.toLowerCase().includes('forzatura')||t.toLowerCase().includes('non sono consecutivi')||t.toLowerCase().includes('associarli comunque'))){
+        let ask=(t.toLowerCase().includes('non sono consecutivi')||t.toLowerCase().includes('associarli comunque'))?'I tavoli selezionati non sono consecutivi. Vuoi associarli comunque?':t+'\n\nVuoi comunque forzare questo spostamento?';
+        if(confirm(ask))return saveBooking(true);
+      }
+      $('saveMsg').style.display='block';$('saveMsg').textContent=t;return;
+    }
+    movingOnly=null;closeBooking();await loadAll();showPage('map',document.querySelector('[data-p="map"]'));return;
+  }
+'''
+if save_marker not in s:
+    raise SystemExit('saveBooking non trovata')
+s=s.replace(save_marker,move_save,1)
 
 # Espone la funzione dal modulo ES senza dipendere dall'ordine esatto degli handler.
 m=re.search(r'Object\.assign\(window,\{([^}]*)\}\);',s)
