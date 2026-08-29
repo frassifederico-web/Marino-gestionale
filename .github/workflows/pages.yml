@@ -61,6 +61,7 @@ jobs:
           python scripts/password_recovery_patch.py
           python scripts/manual_table_move_patch.py
           python scripts/history_mode_patch.py
+          python scripts/square_force_4_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -134,6 +135,9 @@ jobs:
           grep -q 'marinoToday' _site/index.html
           grep -q 'isPastServiceDate' _site/index.html
           grep -q 'marino-history-mode' _site/index.html
+          grep -q '1–3 coperti (4 forzatura)' _site/index.html
+          grep -q 'Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?' _site/index.html
+          grep -q 'marino-square-force-4' _site/index.html
           grep -q 'rel="manifest"' _site/index.html
           grep -q 'backupPanel' _site/index.html
           grep -q 'Crea backup ora' _site/index.html
