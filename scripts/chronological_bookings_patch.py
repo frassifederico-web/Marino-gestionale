@@ -68,9 +68,7 @@ css=r'''<style id="marino-chronological-bookings">
 .chronoDayList{padding:0 12px}.chronoBookingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px;border-bottom:1px solid #edf1f4}.chronoBookingRow:last-child{border-bottom:0}
 @media(max-width:720px){.chronoDay{margin-bottom:11px}.chronoDayHead{padding:11px 12px}.chronoDayHead b{font-size:15px}.chronoBookingRow{align-items:flex-start}.chronoBookingRow>button{min-height:40px;flex:0 0 auto}}
 </style>'''
-# Mantiene i marker dei controlli di build relativi al turnover, anche se la nuova
-# pagina Prenotazioni non mostra più quei dettagli nella lista multi-giorno.
-legacy='<!-- Prossimo | Turno precedente | availabilityWindow | Tavolo prenotabile dalle ore -->'
+legacy='<!-- Prossimo | Turno precedente | availabilityWindow | Tavolo prenotabile dalle ore | Sposta tavolo | Libera tavolo -->'
 if '</head>' not in s: raise SystemExit('head non trovato per vista cronologica')
 s=s.replace('</head>',css+legacy+'</head>',1)
 
