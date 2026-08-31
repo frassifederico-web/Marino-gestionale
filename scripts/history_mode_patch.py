@@ -16,6 +16,26 @@ helpers=r'''function marinoToday(){
   const m=Object.fromEntries(parts.map(x=>[x.type,x.value]));
   return m.year+'-'+m.month+'-'+m.day;
 }
+let marinoEntryResetting=false;
+async function resetToTodayOnEntry(){
+  const d=$('date');
+  if(!d||marinoEntryResetting)return;
+  const today=marinoToday();
+  if(d.value===today)return;
+  d.value=today;
+  // Su primo caricamento boot farà il caricamento normale. Su ripresa da cache/PWA
+  // ricarichiamo invece subito la giornata odierna.
+  if(typeof profile!=='undefined'&&profile&&typeof dayChanged==='function'){
+    marinoEntryResetting=true;
+    try{await dayChanged()}catch(e){console.warn('Ripristino data odierna:',e)}finally{marinoEntryResetting=false}
+  }
+}
+let marinoWasHidden=false;
+window.addEventListener('pageshow',()=>setTimeout(()=>resetToTodayOnEntry(),0));
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){marinoWasHidden=true;return}
+  if(marinoWasHidden){marinoWasHidden=false;setTimeout(()=>resetToTodayOnEntry(),0)}
+});
 function isPastServiceDate(){return Boolean($('date')?.value&&$('date').value<marinoToday())}
 function renderHistoryMode(){
   const past=isPastServiceDate(),box=$('historySummary');
