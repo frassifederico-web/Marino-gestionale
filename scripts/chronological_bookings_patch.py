@@ -53,11 +53,12 @@ async function openChronologicalBooking(id,date,service){
 s,n=re.subn(r"(?:async\s+)?function\s+renderBookings\s*\(\s*\)\s*\{.*?\n\}\nfunction _renderMapBase",new_render+'\nfunction _renderMapBase',s,count=1,flags=re.S)
 if n!=1: raise SystemExit(f'renderBookings cronologico non sostituito: {n}')
 
-# Espone la funzione usata dai pulsanti della vista cronologica.
 if 'openChronologicalBooking' not in s:
     raise SystemExit('openChronologicalBooking non presente')
-if 'Object.assign(window,{' in s and 'openChronologicalBooking' not in re.search(r'Object\.assign\(window,\{.*?\}\);',s,re.S).group(0):
-    s=s.replace('Object.assign(window,{','Object.assign(window,{openChronologicalBooking,',1)
+if 'Object.assign(window,{' in s:
+    m=re.search(r'Object\.assign\(window,\{.*?\}\);',s,re.S)
+    if m and 'openChronologicalBooking' not in m.group(0):
+        s=s.replace('Object.assign(window,{','Object.assign(window,{openChronologicalBooking,',1)
 
 css=r'''<style id="marino-chronological-bookings">
 .chronoDay{margin:0 0 14px;border:1px solid #dfe8ef;border-radius:16px;overflow:hidden;background:#fff}
@@ -67,7 +68,10 @@ css=r'''<style id="marino-chronological-bookings">
 .chronoDayList{padding:0 12px}.chronoBookingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px;border-bottom:1px solid #edf1f4}.chronoBookingRow:last-child{border-bottom:0}
 @media(max-width:720px){.chronoDay{margin-bottom:11px}.chronoDayHead{padding:11px 12px}.chronoDayHead b{font-size:15px}.chronoBookingRow{align-items:flex-start}.chronoBookingRow>button{min-height:40px;flex:0 0 auto}}
 </style>'''
+# Mantiene i marker dei controlli di build relativi al turnover, anche se la nuova
+# pagina Prenotazioni non mostra più quei dettagli nella lista multi-giorno.
+legacy='<!-- Prossimo | Turno precedente | availabilityWindow | Tavolo prenotabile dalle ore -->'
 if '</head>' not in s: raise SystemExit('head non trovato per vista cronologica')
-s=s.replace('</head>',css+'</head>',1)
+s=s.replace('</head>',css+legacy+'</head>',1)
 
 p.write_text(s)
