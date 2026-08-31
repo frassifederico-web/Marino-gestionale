@@ -16,26 +16,6 @@ helpers=r'''function marinoToday(){
   const m=Object.fromEntries(parts.map(x=>[x.type,x.value]));
   return m.year+'-'+m.month+'-'+m.day;
 }
-let marinoEntryResetting=false;
-async function resetToTodayOnEntry(){
-  const d=$('date');
-  if(!d||marinoEntryResetting)return;
-  const today=marinoToday();
-  if(d.value===today)return;
-  d.value=today;
-  // Su primo caricamento boot farà il caricamento normale. Su ripresa da cache/PWA
-  // ricarichiamo invece subito la giornata odierna.
-  if(typeof profile!=='undefined'&&profile&&typeof dayChanged==='function'){
-    marinoEntryResetting=true;
-    try{await dayChanged()}catch(e){console.warn('Ripristino data odierna:',e)}finally{marinoEntryResetting=false}
-  }
-}
-let marinoWasHidden=false;
-window.addEventListener('pageshow',()=>setTimeout(()=>resetToTodayOnEntry(),0));
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){marinoWasHidden=true;return}
-  if(marinoWasHidden){marinoWasHidden=false;setTimeout(()=>resetToTodayOnEntry(),0)}
-});
 function isPastServiceDate(){return Boolean($('date')?.value&&$('date').value<marinoToday())}
 function renderHistoryMode(){
   const past=isPastServiceDate(),box=$('historySummary');
@@ -56,14 +36,37 @@ if marker not in s:
 s=s.replace(marker,helpers+'\n'+marker,1)
 
 # All'apertura dell'app seleziona sempre la data odierna in Italia.
-# Patch robusta rispetto a spazi/formattazione del sorgente base.
 s,n=re.subn(
-    r"function\s+boot\s*\(\s*\)\s*\{\s*if\s*\(\s*!\$\('date'\)\.value\s*\)\s*\$\('date'\)\.value\s*=\s*new Date\(\)\.toISOString\(\)\.slice\(0,10\)\s*;",
-    "function boot(){$('date').value=marinoToday();",
-    s,count=1
+    r"function\s+boot\s*\(\s*\)\s*\{.*?serviceOptions\(\);",
+    "function boot(){$('date').value=marinoToday();serviceOptions();",
+    s,count=1,flags=re.S
 )
 if n!=1:
     raise SystemExit('Inizializzazione data in boot non trovata')
+
+# Anche quando l'app/PWA torna in primo piano, riallinea la giornata a oggi.
+resume_code=r'''
+let marinoLastVisibleDay=marinoToday();
+async function ensureTodayOnResume(){
+  if(document.visibilityState!=='visible')return;
+  const today=marinoToday();
+  if(!$('date'))return;
+  if($('date').value!==today||marinoLastVisibleDay!==today){
+    $('date').value=today;
+    serviceOptions();
+    marinoLastVisibleDay=today;
+    if(profile)await loadAll();
+  }
+}
+document.addEventListener('visibilitychange',ensureTodayOnResume);
+window.addEventListener('pageshow',ensureTodayOnResume);
+window.addEventListener('focus',ensureTodayOnResume);
+'''
+if 'ensureTodayOnResume' not in s:
+    anchor='function isPastServiceDate()'
+    idx=s.find(anchor)
+    if idx<0: raise SystemExit('Punto resume data non trovato')
+    s=s[:idx]+resume_code+'\n'+s[idx:]
 
 # Blocca l'apertura di una nuova prenotazione sulle date passate.
 if "Questa data è in archivio storico." not in s:
@@ -75,17 +78,14 @@ if "Questa data è in archivio storico." not in s:
     if n!=1:
         raise SystemExit('openBooking non trovata')
 
-# Aggiorna il riepilogo storico dopo ogni caricamento della giornata.
 if 'applySettings(s.data);renderHistoryMode()' not in s:
     s,n=re.subn(r"renderUsers\(u\.data\|\|\[\]\);\s*applySettings\(s\.data\)","renderUsers(u.data||[]);applySettings(s.data);renderHistoryMode()",s,count=1)
     if n!=1:
         raise SystemExit('renderHistoryMode non collegata a loadAll')
 
-# Nello storico mostra in mappa anche le prenotazioni completate; annullate sono escluse dal caricamento.
 s=s.replace(".filter(r=>r&&r.status==='confermata')", ".filter(r=>r&&(r.status==='confermata'||isPastServiceDate()))")
 s=s.replace("links.filter(x=>reservations.find(r=>r.id===x.reservation_id)?.status==='confermata').forEach", "links.filter(x=>{let r=reservations.find(r=>r.id===x.reservation_id);return r&&(r.status==='confermata'||isPastServiceDate())}).forEach")
 
-# Blocco UI aggiuntivo al salvataggio di nuove prenotazioni retroattive.
 if "Non è possibile creare prenotazioni per una data precedente a oggi." not in s:
     s,n=re.subn(
         r"async\s+function\s+saveBooking\s*\(\s*force\s*\)\s*\{",
@@ -105,3 +105,6 @@ if '</head>' not in s: raise SystemExit('head non trovato')
 s=s.replace('</head>',css+'</head>',1)
 
 p.write_text(s)
+
+# Applica infine la vista Prenotazioni cronologica, mantenendola separata e testabile.
+exec(Path('scripts/chronological_bookings_patch.py').read_text(), {'__name__':'__main__'})
