@@ -131,14 +131,28 @@ async function cancelBookingFromList(id){
   if(q.error)return alert(q.error.message);
   await loadAll();
 }
+async function openMoveTableFromList(id,date,service){
+  if(date&&$('date').value!==date){$('date').value=date;serviceOptions();}
+  if(service&&[...$('service').options].some(o=>o.value===service))$('service').value=service;
+  if(date||service)await loadAll();
+  moveBookingTable(id);
+}
 function decorateBookingManagementButtons(){
   const host=$('bookingList');if(!host)return;
   host.querySelectorAll('[data-delete-booking]').forEach(b=>{b.textContent='Cancella';b.onclick=null;});
   host.querySelectorAll('[data-edit-booking],[data-open-chrono]').forEach(anchor=>{
     const id=anchor.dataset.editBooking||anchor.dataset.openChrono;if(!id)return;
-    const box=anchor.parentElement;if(!box||box.querySelector('[data-change-day-booking="'+id+'"]'))return;
-    const c=document.createElement('button');c.className='secondary changeDayBtn';c.textContent='Cambia giorno';c.dataset.changeDayBooking=id;c.addEventListener('click',()=>changeBookingDate(id));
-    box.insertBefore(c,anchor.nextSibling);
+    const box=anchor.parentElement;if(!box)return;
+    const date=anchor.dataset.date||null,service=anchor.dataset.service||null;
+    if(!box.querySelector('[data-move-booking="'+id+'"]')){
+      const m=document.createElement('button');m.className='secondary moveTableBtn';m.textContent='Modifica tavolo';m.dataset.moveBooking=id;
+      m.addEventListener('click',()=>openMoveTableFromList(id,date,service));
+      box.insertBefore(m,anchor);
+    }
+    if(!box.querySelector('[data-change-day-booking="'+id+'"]')){
+      const c=document.createElement('button');c.className='secondary changeDayBtn';c.textContent='Cambia giorno';c.dataset.changeDayBooking=id;c.addEventListener('click',()=>changeBookingDate(id));
+      box.insertBefore(c,anchor.nextSibling);
+    }
     if(!box.querySelector('[data-delete-booking]')){const d=document.createElement('button');d.className='danger';d.textContent='Cancella';d.dataset.deleteBooking=id;d.addEventListener('click',()=>cancelBookingFromList(id));box.appendChild(d);}
   });
   host.querySelectorAll('[data-change-day-booking]').forEach(b=>{if(!b.dataset.boundChangeDay){b.dataset.boundChangeDay='1';b.addEventListener('click',()=>changeBookingDate(b.dataset.changeDayBooking));}});
@@ -149,7 +163,6 @@ if marker_del not in s: raise SystemExit('delBooking non trovata')
 s=s.replace(marker_del,manage+'\n'+marker_del,1)
 s=s.replace("if(!confirm('Eliminare la prenotazione?'))return;","if(!confirm('Cancellare definitivamente questa prenotazione? Il tavolo verrà liberato.'))return;",1)
 
-# Decora la lista dopo ogni render, senza dipendere dal formato interno del renderBookings.
 wrap=r'''const _renderBookingsManagementBase=renderBookings;
 renderBookings=async function(){
   const out=await _renderBookingsManagementBase();
@@ -164,11 +177,11 @@ s=s.replace(marker_render,wrap+'\n'+marker_render,1)
 m=re.search(r'Object\.assign\(window,\{([^}]*)\}\);',s)
 if not m: raise SystemExit('Object.assign(window,...) non trovato')
 items=m.group(1)
-for name in ['refreshBookingTimesForService','arrivalMatchesService','changeBookingDate','cancelBookingFromList']:
+for name in ['refreshBookingTimesForService','arrivalMatchesService','changeBookingDate','cancelBookingFromList','openMoveTableFromList']:
     if name not in items: items=items.rstrip()+','+name
 s=s[:m.start()]+'Object.assign(window,{'+items+'});'+s[m.end():]
 
-css='''<style id="marino-square-force-4">\n#picker .coverRange{line-height:1.2}\n@media(max-width:720px){#picker .coverRange{font-size:11px}}\n</style><style id="marino-service-time-sync">\n#arrival,#endTime{font-variant-numeric:tabular-nums}\n.changeDayBtn{white-space:nowrap}\n@media(max-width:720px){.changeDayBtn{min-height:42px}}\n</style>'''
+css='''<style id="marino-square-force-4">\n#picker .coverRange{line-height:1.2}\n@media(max-width:720px){#picker .coverRange{font-size:11px}}\n</style><style id="marino-service-time-sync">\n#arrival,#endTime{font-variant-numeric:tabular-nums}\n.changeDayBtn{white-space:nowrap}\n@media(max-width:720px){.changeDayBtn,.moveTableBtn{min-height:38px}}\n</style>'''
 if '</head>' not in s:
     raise SystemExit('head non trovato')
 s=s.replace('</head>',css+'</head>',1)
