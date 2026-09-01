@@ -60,13 +60,34 @@ body{color:var(--m-ink)}
   #picker .table b{font-size:15px!important;line-height:1.15!important}#picker .coverRange{font-size:12px!important;font-weight:800!important}#picker .tableAdvice{font-size:11px!important;padding:4px 6px!important}#picker .muted{font-size:11px!important}
   #picker .table b,#picker .coverRange,#picker .tableAdvice,#picker .muted{max-width:100%!important;overflow-wrap:anywhere!important}
   #modal .card,.modal .card{max-height:calc(100dvh - 20px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+
+  /* Prenotazioni: più compatte e leggibili a colpo d'occhio, come la versione precedente */
+  #bookings .card{padding:10px!important}
+  #bookings .bookingHead{align-items:center!important;margin-bottom:4px!important}
+  #bookingList .bookingRow{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:8px!important;padding:8px 2px!important;border-bottom:1px solid #e6edf2!important}
+  #bookingList .bookingRow>div:first-child{min-width:0!important;width:auto!important}
+  #bookingList .bookingRow b{font-size:14px!important;line-height:1.2!important;display:block!important}
+  #bookingList .bookingRow .muted{font-size:11.5px!important;line-height:1.25!important;margin-top:2px!important}
+  #bookingList .bookingTime{font-size:13px!important;padding:2px 6px!important;border-radius:6px!important}
+  #bookingList .turnLink{font-size:11px!important;line-height:1.2!important;padding:4px 6px!important;margin-top:4px!important}
+  #bookingList .bookingRow .actions{margin-top:0!important;display:flex!important;flex-direction:column!important;gap:4px!important;width:auto!important;min-width:86px!important}
+  #bookingList .bookingRow .actions button{width:100%!important;min-height:32px!important;padding:5px 7px!important;font-size:11px!important;border-radius:8px!important}
+  #bookingList .presenceBadge{font-size:10px!important;padding:2px 5px!important}
+  .chronoDay{margin-bottom:8px!important;border-radius:12px!important}
+  .chronoDayHead{padding:8px 10px!important}.chronoDayHead b{font-size:14px!important}.chronoDayHead span{font-size:11px!important}
+  .chronoDayList{padding:0 8px!important}
+  .chronoBookingRow{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:7px!important;padding:8px 0!important}
+  .chronoBookingRow b{font-size:13px!important;line-height:1.2!important}.chronoBookingRow .muted{font-size:11px!important;line-height:1.25!important;margin-top:2px!important}
+  .chronoBookingRow>button{margin-top:0!important;width:auto!important;min-height:32px!important;padding:5px 8px!important;font-size:11px!important}
 }
 @media(max-width:390px){
   html{font-size:16px!important}
   .wrap{padding-bottom:calc(146px + env(safe-area-inset-bottom))!important}
   .tabs button{font-size:9.2px!important}
   .tabs button::before{font-size:19px!important}
-  .bookingRow .actions{grid-template-columns:1fr!important}
+  #bookingList .bookingRow{grid-template-columns:minmax(0,1fr) 82px!important}
+  #bookingList .bookingRow .actions{min-width:82px!important}
+  #bookingList .bookingRow .actions button{font-size:10.5px!important;padding:4px 5px!important}
   #picker{grid-template-columns:1fr 1fr!important}
 }
 </style>
