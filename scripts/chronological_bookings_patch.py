@@ -33,12 +33,13 @@ new_render=r'''async function renderBookings(){
   const days=[];for(let i=0;i<=30;i++){let x=new Date(d0);x.setDate(d0.getDate()+i);days.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'))}
   host.innerHTML=days.map(iso=>{
     let rows=all.filter(r=>r.service_date===iso).sort((a,b)=>String(a.arrival_time).localeCompare(String(b.arrival_time)));
+    let covers=rows.reduce((sum,r)=>sum+Number(r.party_size||0),0);
     let title=dayLabel(iso);
     let cards=rows.map(r=>{
       let state=r.status==='completata'?'<span class="presenceBadge completedBadge">LIBERATO</span>':r.arrived_at?'<span class="presenceBadge arrivedBadge">CLIENTE ARRIVATO</span>':'';
       return '<div class="chronoBookingRow"><div><b><span class="reservationNo">#'+reservationDisplayNo(r)+'</span> · '+hhmm(r.arrival_time)+' · '+esc(r.guest_name)+' · '+Number(r.party_size||0)+' coperti</b> '+state+'<div class="muted">'+serviceLabel(r.service_code)+' · '+esc(labelsFor(r.id)||'Tavolo da assegnare')+' · '+esc(r.area||'')+'</div></div><button class="secondary" data-open-chrono="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'" data-service="'+esc(r.service_code)+'">Apri</button></div>';
     }).join('');
-    return '<section class="chronoDay"><div class="chronoDayHead"><div><b>'+esc(title)+'</b><span>'+rows.length+' '+(rows.length===1?'prenotazione':'prenotazioni')+'</span></div></div>'+(rows.length?'<div class="chronoDayList">'+cards+'</div>':'')+'</section>';
+    return '<section class="chronoDay"><div class="chronoDayHead"><div><b>'+esc(title)+'</b><span>'+covers+' '+(covers===1?'coperto prenotato':'coperti prenotati')+'</span></div></div>'+(rows.length?'<div class="chronoDayList">'+cards+'</div>':'')+'</section>';
   }).join('');
   host.querySelectorAll('[data-open-chrono]').forEach(b=>b.addEventListener('click',()=>openChronologicalBooking(b.dataset.openChrono,b.dataset.date,b.dataset.service)));
 }
