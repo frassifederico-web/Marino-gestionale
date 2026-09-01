@@ -36,14 +36,14 @@ new_render=r'''async function renderBookings(){
     let covers=rows.reduce((sum,r)=>sum+Number(r.party_size||0),0);
     let title=dayLabel(iso);
     let cards=rows.map(r=>{
-      let state=r.status==='completata'?'<span class="presenceBadge completedBadge">LIBERATO</span>':r.arrived_at?'<span class="presenceBadge arrivedBadge">CLIENTE ARRIVATO</span>':'';
+      let state=r.status==='completata'?'<span class="presenceBadge completedBadge">LIBERATO</span>':r.arrived_at?'<span class="presenceBadge arrivedBadge">ARRIVATO</span>':'';
       let arriveAction='';
       if(r.status==='confermata'){
         arriveAction=r.arrived_at
-          ? '<button class="secondary chronoArriveToggle chronoArrived" data-chrono-unarrive="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'">Cliente da arrivare</button>'
-          : '<button class="arriveBtn chronoArriveToggle" data-chrono-arrive="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'">Cliente arrivato</button>';
+          ? '<button class="secondary chronoArriveToggle chronoArrived" title="Segna cliente da arrivare" aria-label="Cliente da arrivare" data-chrono-unarrive="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'"><span class="chronoActionIcon">↩</span><span class="chronoActionText">Da arrivare</span></button>'
+          : '<button class="arriveBtn chronoArriveToggle" title="Segna cliente arrivato" aria-label="Cliente arrivato" data-chrono-arrive="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'"><span class="chronoActionIcon">✓</span><span class="chronoActionText">Arrivato</span></button>';
       }
-      return '<div class="chronoBookingRow"><div class="chronoBookingMain"><b><span class="reservationNo">#'+reservationDisplayNo(r)+'</span> · '+hhmm(r.arrival_time)+' · '+esc(r.guest_name)+' · '+Number(r.party_size||0)+' coperti</b> '+state+'<div class="muted">'+serviceLabel(r.service_code)+' · '+esc(labelsFor(r.id)||'Tavolo da assegnare')+' · '+esc(r.area||'')+'</div></div><div class="chronoQuickActions">'+arriveAction+'<button class="secondary" data-open-chrono="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'" data-service="'+esc(r.service_code)+'">Apri</button></div></div>';
+      return '<div class="chronoBookingRow"><div class="chronoBookingMain"><b><span class="reservationNo">#'+reservationDisplayNo(r)+'</span> · '+hhmm(r.arrival_time)+' · '+esc(r.guest_name)+' · '+Number(r.party_size||0)+' coperti</b> '+state+'<div class="muted">'+serviceLabel(r.service_code)+' · '+esc(labelsFor(r.id)||'Tavolo da assegnare')+' · '+esc(r.area||'')+'</div></div><div class="chronoQuickActions">'+arriveAction+'<button class="secondary chronoOpenBtn" title="Apri prenotazione" aria-label="Apri prenotazione" data-open-chrono="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'" data-service="'+esc(r.service_code)+'"><span class="chronoActionIcon">›</span><span class="chronoActionText">Apri</span></button></div></div>';
     }).join('');
     return '<section class="chronoDay"><div class="chronoDayHead"><div><b>'+esc(title)+'</b><span>'+covers+' '+(covers===1?'coperto prenotato':'coperti prenotati')+'</span></div></div>'+(rows.length?'<div class="chronoDayList">'+cards+'</div>':'')+'</section>';
   }).join('');
@@ -82,13 +82,14 @@ if 'Object.assign(window,{' in s:
         if prefix:s=s.replace('Object.assign(window,{','Object.assign(window,{'+','.join(prefix)+',',1)
 
 css=r'''<style id="marino-chronological-bookings">
-.chronoDay{margin:0 0 14px;border:1px solid #dfe8ef;border-radius:16px;overflow:hidden;background:#fff}
-.chronoDayHead{padding:12px 14px;background:#eef5fb;border-bottom:1px solid #dfe8ef;text-transform:capitalize}
-.chronoDayHead>div{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.chronoDayHead b{font-size:16px;color:#063f78}.chronoDayHead span{font-size:12px;font-weight:800;color:#526574}
-.chronoDayList{padding:0 12px}.chronoBookingRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid #edf1f4}.chronoBookingRow:last-child{border-bottom:0}
-.chronoBookingMain{min-width:0;flex:1}.chronoQuickActions{display:flex;align-items:center;gap:5px;flex:0 0 auto}.chronoQuickActions button{min-height:34px;padding:6px 8px;font-size:11px;white-space:nowrap;border-radius:8px}.chronoArriveToggle{font-weight:900}.chronoArrived{background:#eef2f5!important;color:#34404a!important;border-color:#aeb6bd!important}
-@media(max-width:720px){.chronoDay{margin-bottom:11px}.chronoDayHead{padding:10px 11px}.chronoDayHead b{font-size:15px}.chronoBookingRow{align-items:flex-start;padding:9px 1px;gap:7px}.chronoQuickActions{flex-direction:column;gap:4px}.chronoQuickActions button{min-height:31px!important;padding:5px 7px!important;font-size:10px!important;width:100%;max-width:108px}.chronoArriveToggle{max-width:108px!important}.presenceBadge{font-size:8px!important;padding:3px 5px!important}}
+.chronoDay{margin:0 0 12px;border:1px solid #dfe8ef;border-radius:14px;overflow:hidden;background:#fff}
+.chronoDayHead{padding:10px 12px;background:#eef5fb;border-bottom:1px solid #dfe8ef;text-transform:capitalize}
+.chronoDayHead>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chronoDayHead b{font-size:15px;color:#063f78}.chronoDayHead span{font-size:11px;font-weight:800;color:#526574}
+.chronoDayList{padding:0 10px}.chronoBookingRow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 1px;border-bottom:1px solid #edf1f4}.chronoBookingRow:last-child{border-bottom:0}
+.chronoBookingMain{min-width:0;flex:1}.chronoBookingMain>b{font-size:13px;line-height:1.25}.chronoBookingMain .muted{font-size:11px;line-height:1.25;margin-top:2px}.chronoQuickActions{display:flex;align-items:center;gap:4px;flex:0 0 auto}.chronoQuickActions button{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-height:29px;padding:4px 6px;font-size:9px;white-space:nowrap;border-radius:7px;font-weight:850}.chronoActionIcon{font-size:12px;line-height:1}.chronoActionText{font-size:9px;line-height:1}.chronoArrived{background:#eef2f5!important;color:#34404a!important;border-color:#aeb6bd!important}.chronoOpenBtn{min-width:44px}.presenceBadge{margin-left:3px!important;font-size:7px!important;padding:2px 4px!important;letter-spacing:.02em!important}
+@media(max-width:720px){.chronoDay{margin-bottom:8px}.chronoDayHead{padding:8px 9px}.chronoDayHead b{font-size:14px}.chronoDayHead span{font-size:10px}.chronoDayList{padding:0 8px}.chronoBookingRow{align-items:center;padding:6px 0;gap:5px}.chronoBookingMain>b{font-size:12px}.chronoBookingMain .muted{font-size:10px}.chronoQuickActions{gap:3px}.chronoQuickActions button{min-height:27px!important;padding:3px 5px!important;border-radius:6px!important}.chronoActionIcon{font-size:11px}.chronoActionText{font-size:8.5px}.chronoArriveToggle{max-width:78px}.chronoOpenBtn{max-width:48px}.presenceBadge{font-size:6.8px!important;padding:2px 3px!important}}
+@media(max-width:390px){.chronoActionText{display:none}.chronoQuickActions button{width:28px!important;min-width:28px!important;max-width:28px!important;padding:0!important}.chronoActionIcon{font-size:12px}.chronoBookingMain>b{font-size:11.5px}.chronoBookingMain .muted{font-size:9.5px}}
 </style>'''
 legacy='<!-- Prossimo | Turno precedente | availabilityWindow | Tavolo prenotabile dalle ore | Sposta tavolo | Libera tavolo -->'
 if '</head>' not in s: raise SystemExit('head non trovato per vista cronologica')
