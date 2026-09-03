@@ -66,6 +66,7 @@ jobs:
           python scripts/reservation_edit_date_guard_patch.py
           python scripts/reservation_day_dropdown_patch.py
           python scripts/dehors_rules_map_filter_patch.py
+          python scripts/map_day_selector_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -158,6 +159,9 @@ jobs:
           grep -q 'Solo occupati' _site/index.html
           grep -q 'n===2)return {mn:4,mx:8}' _site/index.html
           grep -q 'marino-map-day-filter' _site/index.html
+          grep -q 'id="mapDaySelector"' _site/index.html
+          grep -q 'fillMapDaySelector' _site/index.html
+          grep -q 'marino-map-day-selector' _site/index.html
           grep -q 'rel="manifest"' _site/index.html
           grep -q 'backupPanel' _site/index.html
           grep -q 'Crea backup ora' _site/index.html
