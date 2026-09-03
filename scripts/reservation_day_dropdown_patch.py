@@ -22,6 +22,19 @@ function marinoNextBookingDates(days=31){
   }
   return out;
 }
+async function syncNewBookingRoomToPrimaryArea(){
+  if(editing)return;
+  const date=$('date')?.value,service=$('service')?.value;
+  if(!date||!service||!$('room'))return;
+  const q=await db.from('service_settings').select('primary_area').eq('service_date',date).eq('service_code',service).maybeSingle();
+  if(q.error){console.warn('Sala principale:',q.error.message);return}
+  const area=q.data?.primary_area;
+  if(area&&['interno','dehors'].includes(area)){
+    $('room').value=area;
+    selected=[];
+    renderPicker();
+  }
+}
 function ensureBookingDayField(){
   if($('bookingDay'))return $('bookingDay');
   const guest=$('guest');
@@ -51,6 +64,7 @@ function ensureBookingDayField(){
     if(typeof refreshBookingTimesForService==='function')refreshBookingTimesForService(true);
     selected=[];
     await loadAll();
+    await syncNewBookingRoomToPrimaryArea();
     renderPicker();
   });
   return $('bookingDay');
@@ -72,7 +86,7 @@ openBooking=function(){
   marinoEditingServiceDate=null;
   marinoEditingServiceCode=null;
   const out=_openBookingDayBase();
-  setTimeout(()=>fillBookingDayField($('date')?.value||marinoToday(),false),0);
+  setTimeout(async()=>{fillBookingDayField($('date')?.value||marinoToday(),false);await syncNewBookingRoomToPrimaryArea();renderPicker()},0);
   return out;
 };
 
@@ -96,6 +110,7 @@ saveBooking=async function(force){
       if(typeof refreshBookingTimesForService==='function')refreshBookingTimesForService(true);
       selected=[];
       await loadAll();
+      await syncNewBookingRoomToPrimaryArea();
       renderPicker();
       return alert('Ho aggiornato il giorno della prenotazione. Seleziona il tavolo per '+marinoDateLabel(chosen)+' e salva di nuovo.');
     }
@@ -117,7 +132,7 @@ if '</head>' not in s:
     raise SystemExit('head non trovato per menu giorno prenotazione')
 s=s.replace('</head>',css+'</head>',1)
 
-if 'id="bookingDay"' not in s or 'fillBookingDayField' not in s or '_saveBookingDayBase' not in s:
+if 'id="bookingDay"' not in s or 'fillBookingDayField' not in s or '_saveBookingDayBase' not in s or 'syncNewBookingRoomToPrimaryArea' not in s:
     raise SystemExit('Menu giorno prenotazione non inserito')
 
 p.write_text(s)
