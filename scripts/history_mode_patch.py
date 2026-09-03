@@ -44,14 +44,17 @@ s,n=re.subn(
 if n!=1:
     raise SystemExit('Inizializzazione data in boot non trovata')
 
-# Anche quando l'app/PWA torna in primo piano, riallinea la giornata a oggi.
+# Quando l'app/PWA torna davvero in primo piano può riallinearsi a oggi,
+# ma MAI mentre è aperta/modificata una prenotazione: in quel caso la data
+# del servizio selezionato deve restare invariata.
 resume_code=r'''
 let marinoLastVisibleDay=marinoToday();
 async function ensureTodayOnResume(){
   if(document.visibilityState!=='visible')return;
+  if((typeof editing!=='undefined'&&editing)||$('modal')?.classList.contains('open'))return;
   const today=marinoToday();
   if(!$('date'))return;
-  if($('date').value!==today||marinoLastVisibleDay!==today){
+  if(marinoLastVisibleDay!==today){
     $('date').value=today;
     serviceOptions();
     marinoLastVisibleDay=today;
@@ -60,7 +63,6 @@ async function ensureTodayOnResume(){
 }
 document.addEventListener('visibilitychange',ensureTodayOnResume);
 window.addEventListener('pageshow',ensureTodayOnResume);
-window.addEventListener('focus',ensureTodayOnResume);
 '''
 if 'ensureTodayOnResume' not in s:
     anchor='function isPastServiceDate()'
