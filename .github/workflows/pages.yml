@@ -64,6 +64,7 @@ jobs:
           python scripts/history_mode_patch.py
           python scripts/square_force_4_patch.py
           python scripts/reservation_edit_date_guard_patch.py
+          python scripts/reservation_day_dropdown_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -148,6 +149,9 @@ jobs:
           grep -q 'marino-square-force-4' _site/index.html
           grep -q 'marinoEditingServiceDate' _site/index.html
           grep -q '_saveBookingDateSafeBase' _site/index.html
+          grep -q 'id="bookingDay"' _site/index.html
+          grep -q 'fillBookingDayField' _site/index.html
+          grep -q 'marino-booking-day-dropdown' _site/index.html
           grep -q 'rel="manifest"' _site/index.html
           grep -q 'backupPanel' _site/index.html
           grep -q 'Crea backup ora' _site/index.html
