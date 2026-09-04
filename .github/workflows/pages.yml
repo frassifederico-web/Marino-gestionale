@@ -61,6 +61,7 @@ jobs:
           python scripts/password_recovery_patch.py
           python scripts/auth_stability_patch.py
           python scripts/manual_table_move_patch.py
+          python scripts/atomic_chain_move_patch.py
           python scripts/history_mode_patch.py
           python scripts/square_force_4_patch.py
           python scripts/reservation_edit_date_guard_patch.py
@@ -142,6 +143,9 @@ jobs:
           grep -q 'Sposta tavolo' _site/index.html
           grep -q 'moveBookingTable' _site/index.html
           grep -q 'marino-manual-table-move' _site/index.html
+          grep -q 'move_reservation_tables_batch' _site/index.html
+          grep -q 'Conferma spostamenti' _site/index.html
+          grep -q 'marino-atomic-chain-move' _site/index.html
           grep -q 'historySummary' _site/index.html
           grep -q 'ARCHIVIO STORICO' _site/index.html
           grep -q 'marinoToday' _site/index.html
