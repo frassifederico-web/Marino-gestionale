@@ -101,3 +101,4 @@ if 'editOccupancyLegend' not in s or 'editOccInline' not in s or 'Tavoli occupat
     raise SystemExit('Dettaglio occupazione/note modifica non inserito')
 
 p.write_text(s)
+exec(Path('scripts/print_reservations_pdf_patch.py').read_text(), {'__name__':'__main__'})
