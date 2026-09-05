@@ -9,7 +9,7 @@ function marinoPrintEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&am
 function ensureReservationsPrintButton(){
   const host=$('bookingList');if(!host||document.getElementById('downloadReservationsPdfBtn'))return;
   const bar=document.createElement('div');bar.className='reservationsPrintBar';
-  bar.innerHTML='<button id="downloadReservationsPdfBtn" type="button" class="primary reservationsPrintBtn">⬇ Scarica lista prenotazioni</button><span>PDF/stampa con tavolo assegnato da compilare a mano</span>';
+  bar.innerHTML='<button id="downloadReservationsPdfBtn" type="button" class="primary reservationsPrintBtn">⬇ Scarica lista prenotazioni</button><span>A4 verticale · tavolo da assegnare a mano · 5 righe libere finali</span>';
   host.parentNode.insertBefore(bar,host);
   bar.querySelector('button').addEventListener('click',printTodayReservationsSheet);
 }
@@ -27,17 +27,19 @@ async function printTodayReservationsSheet(){
   const covers=rows.reduce((a,r)=>a+Number(r.party_size||0),0);
   const label=new Intl.DateTimeFormat('it-IT',{timeZone:'Europe/Rome',weekday:'long',day:'2-digit',month:'long',year:'numeric'}).format(new Date(date+'T12:00:00'));
   const n=rows.length;
-  const fs=n>28?7.2:n>22?8:n>16?8.8:9.6;
+  const fs=n>28?7.4:n>22?8.1:n>16?8.8:9.6;
   const pad=n>28?3:n>20?4:5;
-  const body=rows.map((r,i)=>{
+  const body=rows.map(r=>{
     const note=String(r.notes||'').trim();
-    return '<tr><td class="n">'+(i+1)+'</td><td class="ora">'+marinoPrintEsc(hhmm(r.arrival_time))+'</td><td class="nome"><b>'+marinoPrintEsc(r.guest_name||'')+'</b></td><td class="cop">'+Number(r.party_size||0)+'</td><td class="note">'+(note?marinoPrintEsc(note):'')+'</td><td class="tavolo"></td></tr>';
+    return '<tr><td class="tavolo"></td><td class="ora">'+marinoPrintEsc(hhmm(r.arrival_time))+'</td><td class="nome"><b>'+marinoPrintEsc(r.guest_name||'')+'</b></td><td class="cop">'+Number(r.party_size||0)+'</td><td class="note">'+(note?marinoPrintEsc(note):'')+'</td></tr>';
   }).join('');
+  const emptyRows=Array.from({length:5}).map(()=>'<tr class="manualRow"><td class="tavolo"></td><td class="ora"></td><td class="nome"></td><td class="cop"></td><td class="note"></td></tr>').join('');
+  const logo='<div class="logoWrap"><img src="icon.svg" alt="MARINO"><div><div class="brand">MARINO</div><div class="subtitle">TRATTORIA DI PESCE</div></div></div>';
   const html='<!doctype html><html><head><meta charset="utf-8"><title>MARINO - Lista prenotazioni '+date+'</title><style>'+
-    '@page{size:A4 portrait;margin:7mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#102c45}.head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #063f78;padding-bottom:5px;margin-bottom:6px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em;color:#063f78}.date{font-size:11px;font-weight:800;text-transform:capitalize}.tot{font-size:9px;margin-top:2px;color:#4d5c67}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:'+fs+'pt}th,td{border:1px solid #9aa8b3;padding:'+pad+'px 4px;vertical-align:middle;line-height:1.15}th{background:#eef5fb;color:#063f78;font-size:'+(fs-.4)+'pt;text-transform:uppercase;letter-spacing:.02em}.n{width:5%;text-align:center}.ora{width:10%;text-align:center;font-weight:800}.nome{width:26%}.cop{width:8%;text-align:center;font-weight:800}.note{width:31%;font-weight:650}.tavolo{width:20%;min-height:20px}.foot{margin-top:5px;font-size:7.5pt;color:#5b6770;display:flex;justify-content:space-between}.noRows{padding:30px;text-align:center;border:1px solid #ccd6dd}'+
-    '</style></head><body><div class="head"><div><div class="brand">MARINO</div><div class="date">Lista prenotazioni · '+marinoPrintEsc(label)+'</div></div><div style="text-align:right"><div><b>'+rows.length+' prenotazioni</b></div><div class="tot">'+covers+' coperti totali</div></div></div>'+
-    (rows.length?'<table><thead><tr><th class="n">#</th><th class="ora">Ora</th><th class="nome">Prenotazione</th><th class="cop">Cop.</th><th class="note">Note</th><th class="tavolo">Tavolo assegnato</th></tr></thead><tbody>'+body+'</tbody></table>':'<div class="noRows">Nessuna prenotazione per il servizio.</div>')+
-    '<div class="foot"><span>Colonna “Tavolo assegnato” lasciata libera per compilazione manuale.</span><span>MARINO · uso interno sala</span></div><script>window.onload=()=>setTimeout(()=>window.print(),180)<\/script></body></html>';
+    '@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box}html,body{width:100%;min-height:100%;margin:0}body{font-family:Arial,Helvetica,sans-serif;color:#102c45;background:#fff}.sheet{min-height:279mm;display:flex;flex-direction:column}.head{display:flex;justify-content:space-between;align-items:center;border:2px solid #063f78;border-radius:10px;padding:7px 10px;background:#fff9e7;margin-bottom:7px}.logoWrap{display:flex;align-items:center;gap:9px}.logoWrap img{width:42px;height:42px;display:block}.brand{font-size:20px;font-weight:900;letter-spacing:.08em;color:#063f78;line-height:1}.subtitle{font-size:7.5pt;font-weight:800;letter-spacing:.12em;color:#c65300;margin-top:3px}.dateBlock{text-align:right}.date{font-size:10.5pt;font-weight:900;text-transform:capitalize;color:#063f78}.tot{font-size:8pt;margin-top:3px;color:#526574;font-weight:700}.rule{height:4px;background:#c65300;border-radius:99px;margin:0 0 7px}table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:'+fs+'pt;border:1.5px solid #063f78;border-radius:9px;overflow:hidden}th,td{border-right:1px solid #9fb2c2;border-bottom:1px solid #b8c5cf;padding:'+pad+'px 5px;vertical-align:middle;line-height:1.16}th:last-child,td:last-child{border-right:0}tbody tr:last-child td{border-bottom:0}th{background:#063f78;color:#fff;font-size:'+(fs-.2)+'pt;text-transform:uppercase;letter-spacing:.025em;font-weight:900}.tavolo{width:18%;text-align:center;font-weight:900}.ora{width:11%;text-align:center;font-weight:900}.nome{width:29%}.cop{width:9%;text-align:center;font-weight:900}.note{width:33%;font-weight:650}.manualRow td{height:'+(n>24?'20':'25')+'px;background:#fffdf6}.manualRow .nome:after{content:""}.footerSpace{flex:1;min-height:5mm}.foot{margin-top:7px;padding:6px 8px;border-top:2px solid #063f78;font-size:7.5pt;color:#526574;display:flex;justify-content:space-between;gap:10px}.hint{font-weight:800;color:#063f78}.noRows{padding:30px;text-align:center;border:2px solid #063f78;border-radius:9px;background:#fff9e7}'+
+    '</style></head><body><div class="sheet"><div class="head">'+logo+'<div class="dateBlock"><div class="date">Lista prenotazioni · '+marinoPrintEsc(label)+'</div><div class="tot">'+rows.length+' prenotazioni · '+covers+' coperti totali</div></div></div><div class="rule"></div>'+
+    (rows.length?'<table><thead><tr><th class="tavolo">Tavolo assegnato</th><th class="ora">Ora</th><th class="nome">Prenotazione</th><th class="cop">Cop.</th><th class="note">Note</th></tr></thead><tbody>'+body+emptyRows+'</tbody></table>':'<div class="noRows">Nessuna prenotazione per il servizio.</div>')+
+    '<div class="footerSpace"></div><div class="foot"><span class="hint">Le ultime 5 righe sono libere per osservazioni o prenotazioni prese sul momento.</span><span>MARINO · uso interno sala</span></div></div><script>window.onload=()=>setTimeout(()=>window.print(),220)<\/script></body></html>';
   popup.document.open();popup.document.write(html);popup.document.close();
 }
 const _renderBookingsPrintBase=renderBookings;
@@ -63,5 +65,8 @@ css=r'''<style id="marino-reservations-print">
 </style>'''
 if '</head>' not in s: raise SystemExit('head non trovato')
 s=s.replace('</head>',css+'</head>',1)
+
+if 'Tavolo assegnato' not in s or 'Array.from({length:5})' not in s or '@page{size:A4 portrait' not in s or 'TRATTORIA DI PESCE' not in s:
+    raise SystemExit('Lista prenotazioni A4 Marino non aggiornata correttamente')
 
 p.write_text(s)
