@@ -45,11 +45,16 @@ new_render=r'''async function renderBookings(){
       }
       let note=String(r.notes||'').trim();
       let noteLine=note?'<div class="chronoNotes"><b>NOTE:</b> '+esc(note)+'</div>':'';
-      return '<div class="chronoBookingRow"><div class="chronoBookingMain"><div class="chronoGuestLine"><span class="reservationNo">#'+reservationDisplayNo(r)+'</span><strong class="chronoGuestName">'+esc(r.guest_name)+'</strong>'+state+'</div><div class="chronoCoreInfo"><span class="chronoTime">'+hhmm(r.arrival_time)+'</span><span class="chronoCovers">'+Number(r.party_size||0)+' coperti</span></div><div class="muted">'+serviceLabel(r.service_code)+' · '+esc(labelsFor(r.id)||'Tavolo da assegnare')+' · '+esc(r.area||'')+'</div>'+noteLine+'</div><div class="chronoQuickActions">'+arriveAction+'<button class="secondary chronoActionBtn chronoOpenBtn" title="Modifica" aria-label="Modifica prenotazione" data-modify-chrono="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'" data-service="'+esc(r.service_code)+'"><span class="chronoActionIcon">✎</span></button><button class="danger chronoActionBtn chronoCancelBtn" title="Annulla" aria-label="Annulla prenotazione" data-cancel-chrono="'+esc(r.id)+'"><span class="chronoActionIcon">×</span></button></div></div>';
+      return '<div class="chronoBookingRow"><div class="chronoBookingMain"><div class="chronoGuestLine"><span class="reservationNo">#'+reservationDisplayNo(r)+'</span><strong class="chronoGuestName">'+esc(r.guest_name)+'</strong>'+state+'</div><div class="chronoCoreInfo"><span class="chronoTime">'+hhmm(r.arrival_time)+'</span><span class="chronoCovers">'+Number(r.party_size||0)+' coperti</span></div><div class="muted">'+serviceLabel(r.service_code)+' · '+esc(labelsFor(r.id)||'Tavolo da assegnare')+' · '+esc(r.area||'')+'</div>'+noteLine+'</div><div class="chronoQuickActions">'+arriveAction+'<button type="button" class="secondary chronoActionBtn chronoOpenBtn" title="Modifica" aria-label="Modifica prenotazione" data-modify-chrono="'+esc(r.id)+'" data-date="'+esc(r.service_date)+'" data-service="'+esc(r.service_code)+'"><span class="chronoActionIcon">✎</span></button><button type="button" class="danger chronoActionBtn chronoCancelBtn" title="Annulla" aria-label="Annulla prenotazione" data-cancel-chrono="'+esc(r.id)+'"><span class="chronoActionIcon">×</span></button></div></div>';
     }).join('');
     return '<section class="chronoDay"><div class="chronoDayHead"><div><b>'+esc(title)+'</b><span>'+covers+' '+(covers===1?'coperto prenotato':'coperti prenotati')+'</span></div></div>'+(rows.length?'<div class="chronoDayList">'+cards+'</div>':'')+'</section>';
   }).join('');
-  host.querySelectorAll('[data-modify-chrono]').forEach(b=>b.addEventListener('click',()=>openChronologicalBooking(b.dataset.modifyChrono,b.dataset.date,b.dataset.service)));
+  host.querySelectorAll('[data-modify-chrono]').forEach(b=>b.addEventListener('click',async ev=>{
+    ev.preventDefault();ev.stopPropagation();
+    if(b.disabled)return;
+    b.disabled=true;
+    try{await openChronologicalBooking(b.dataset.modifyChrono,b.dataset.date,b.dataset.service)}finally{b.disabled=false}
+  }));
   host.querySelectorAll('[data-chrono-arrive]').forEach(b=>b.addEventListener('click',()=>setChronologicalArrival(b.dataset.chronoArrive,true,b.dataset.date)));
   host.querySelectorAll('[data-chrono-unarrive]').forEach(b=>b.addEventListener('click',()=>setChronologicalArrival(b.dataset.chronoUnarrive,false,b.dataset.date)));
   host.querySelectorAll('[data-cancel-chrono]').forEach(b=>b.addEventListener('click',()=>cancelBookingFromList(b.dataset.cancelChrono)));
@@ -78,19 +83,37 @@ function showChronologicalEditActions(id){
   bar.querySelector('[data-edit-move-table]').addEventListener('click',()=>{removeChronologicalEditActions();moveBookingTable(id)});
 }
 async function openChronologicalBooking(id,date,service){
-  $('date').value=date;
-  serviceOptions();
-  if([...$('service').options].some(o=>o.value===service))$('service').value=service;
-  await loadAll();
-  editBooking(id);
-  showChronologicalEditActions(id);
+  try{
+    const direct=await db.from('reservations').select('*').eq('id',id).maybeSingle();
+    if(direct.error)throw direct.error;
+    const row=direct.data;
+    if(!row){alert('Prenotazione non trovata. Aggiorna la lista e riprova.');return}
+    const targetDate=row.service_date||date;
+    const targetService=row.service_code||service;
+    if(!$('date')||!$('service')){alert('Impossibile aprire la modifica in questo momento. Riapri la pagina Prenotazioni e riprova.');return}
+    $('date').value=targetDate;
+    serviceOptions();
+    if([...$('service').options].some(o=>o.value===targetService))$('service').value=targetService;
+    await loadAll();
+    if(!reservations.some(r=>r.id===id)){
+      const retry=await db.from('reservations').select('*').eq('id',id).maybeSingle();
+      if(retry.error)throw retry.error;
+      if(retry.data)reservations=[...reservations.filter(r=>r.id!==id),retry.data];
+    }
+    if(!reservations.some(r=>r.id===id)){alert('La prenotazione non è disponibile nel servizio selezionato. Aggiorna la lista e riprova.');return}
+    editBooking(id);
+    setTimeout(()=>showChronologicalEditActions(id),0);
+  }catch(err){
+    console.error('Errore apertura modifica prenotazione',err);
+    alert('Non riesco ad aprire la modifica: '+(err?.message||err));
+  }
 }'''
 
 s,n=re.subn(r"(?:async\s+)?function\s+renderBookings\s*\(\s*\)\s*\{.*?\n\}\nfunction _renderMapBase",new_render+'\nfunction _renderMapBase',s,count=1,flags=re.S)
 if n!=1: raise SystemExit(f'renderBookings cronologico non sostituito: {n}')
 
-if 'openChronologicalBooking' not in s or 'setChronologicalArrival' not in s:
-    raise SystemExit('Funzioni cronologiche non presenti')
+if 'openChronologicalBooking' not in s or 'setChronologicalArrival' not in s or "maybeSingle()" not in s:
+    raise SystemExit('Funzioni cronologiche robuste non presenti')
 if 'Object.assign(window,{' in s:
     m=re.search(r'Object\.assign\(window,\{.*?\}\);',s,re.S)
     if m:
