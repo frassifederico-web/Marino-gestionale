@@ -102,3 +102,4 @@ if 'editOccupancyLegend' not in s or 'editOccInline' not in s or 'Tavoli occupat
 
 p.write_text(s)
 exec(Path('scripts/print_reservations_pdf_patch.py').read_text(), {'__name__':'__main__'})
+exec(Path('scripts/internal_tables_sep10_patch.py').read_text(), {'__name__':'__main__'})
