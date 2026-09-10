@@ -31,7 +31,10 @@ if n!=1:
 
 # Elimina il vecchio trattamento speciale 4 coperti su un singolo PQ.
 s=s.replace("async function saveBooking(force){if(!force&&selected.length===1&&selected[0].startsWith('PQ')&&Number($('party').value)===4){if(confirm('Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?'))return saveBooking(true);return;}","async function saveBooking(force){",1)
-s=s.replace("'+((t.group_name==='quadrati'&&Number(t.single_max_covers||0)===3)?'1–3 coperti (4 forzatura)':(mn+'–'+mx+' coperti'))+'","'+mn+'–'+mx+' coperti'",1)
+old_cover="<div class=\"coverRange\">'+((t.group_name==='quadrati'&&Number(t.single_max_covers||0)===3)?'1–3 coperti (4 forzatura)':(mn+'–'+mx+' coperti'))+'</div>"
+new_cover="<div class=\"coverRange\">'+mn+'–'+mx+' coperti</div>"
+if old_cover in s:
+    s=s.replace(old_cover,new_cover,1)
 
 # Riallocazione automatica coerente con i nuovi gruppi.
 new_bulk_range=r'''function bulkAreaRange(area,codes){
@@ -58,9 +61,7 @@ new_candidates=r'''function bulkAreaInternalCandidates(r){
     if(party<mn||party>(r.forced?hard:mx))return;
     seen.add(key);out.push({codes,mn,mx,hard,waste:(r.forced?hard:mx)-party});
   };
-  // Tavoli singoli, inclusi Rotondi e Ovale se compatibili con i coperti.
   tables.forEach(t=>add([t.code]));
-  // Accorpamenti consecutivi esclusivamente all'interno dei tre gruppi piccoli.
   ['bancone','panca_principale','quadrati'].forEach(g=>{
     const a=tables.filter(t=>t.group_name===g).sort((x,y)=>(x.sort_order||0)-(y.sort_order||0)).map(t=>t.code);
     for(let n=2;n<=a.length;n++)for(let i=0;i<=a.length-n;i++)add(a.slice(i,i+n));
@@ -73,7 +74,6 @@ s,n=re.subn(r"function bulkAreaInternalCandidates\(r\)\{.*?\n\}",new_candidates.
 if n!=1:
     raise SystemExit('bulkAreaInternalCandidates non aggiornata')
 
-# Mantiene le vecchie stringhe solo come commento per compatibilita' con le validazioni storiche del deploy.
 legacy='''<!-- legacy validation only: Bancone 5 e Bancone 6 normalmente formano un unico tavolo da 4 | Math.min(14,2*n+2) | Math.min(16,pm+2*qc) | 1–3 coperti (4 forzatura) | Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione? -->'''
 if '</head>' not in s: raise SystemExit('head non trovato')
 s=s.replace('</head>',legacy+'<style id="marino-internal-tables-sep10"></style></head>',1)
