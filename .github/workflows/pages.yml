@@ -62,6 +62,7 @@ jobs:
           python scripts/dehors_rules_map_filter_patch.py
           python scripts/map_day_selector_patch.py
           python scripts/edit_booking_occupancy_patch.py
+          python scripts/internal_tables_sep10_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text()
