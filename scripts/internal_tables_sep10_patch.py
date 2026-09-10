@@ -50,16 +50,13 @@ function selectionForceHint(){
 s,n=re.subn(r"function selectionRange\(\)\{.*?\}\s*function selectionForceHint\(\)\{.*?\}\s*",new_selection,s,count=1,flags=re.S)
 if n!=1: raise SystemExit('selectionRange/selectionForceHint non aggiornate')
 
-# Estende la conferma 4 coperti (originariamente solo PQ) a tutti i tavoli piccoli.
 old="async function saveBooking(force){if(!force&&selected.length===1&&selected[0].startsWith('PQ')&&Number($('party').value)===4){if(confirm('Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?'))return saveBooking(true);return;}"
 new="async function saveBooking(force){if(!force&&selected.length===1&&marinoSmallInternalCode(selected[0])&&Number($('party').value)===4){if(confirm('Sei sicuro? Vuoi mettere 4 coperti su questo singolo tavolo?'))return saveBooking(true);return;}"
 if old in s:s=s.replace(old,new,1)
 else:
-    # Se il vecchio guard non è presente, inseriscilo comunque all'inizio del saveBooking finale.
     s,n2=re.subn(r"async function saveBooking\(force\)\{",new,s,count=1)
     if n2!=1: raise SystemExit('saveBooking non trovato per forzatura 4')
 
-# Testo capienza dei tavoli piccoli: rende esplicita la forzatura a 4.
 old_cover="<div class=\"coverRange\">'+((t.group_name==='quadrati'&&Number(t.single_max_covers||0)===3)?'1–3 coperti (4 forzatura)':(mn+'–'+mx+' coperti'))+'</div>"
 new_cover="<div class=\"coverRange\">'+((t.area==='interno'&&marinoSmallInternalCode(t.code))?'1–3 coperti (4 forzatura)':(mn+'–'+mx+' coperti'))+'</div>"
 if old_cover in s:s=s.replace(old_cover,new_cover,1)
@@ -67,7 +64,6 @@ else:
     plain="<div class=\"coverRange\">'+mn+'–'+mx+' coperti</div>"
     if plain in s:s=s.replace(plain,new_cover,1)
 
-# Riallocazione automatica: stesse regole e stessi tre blocchi.
 new_bulk_range=r'''function bulkAreaRange(area,codes){
   const ts=codes.map(c=>allTables.find(t=>t.code===c)).filter(Boolean),n=ts.length;
   if(area==='dehors')return n===1?[1,4,4]:n===2?[4,8,8]:[2*n+1,2*n+2,2*n+2];
@@ -106,10 +102,10 @@ new_candidates=r'''function bulkAreaInternalCandidates(r){
 s,n=re.subn(r"function bulkAreaInternalCandidates\(r\)\{.*?\n\}",new_candidates.rstrip(),s,count=1,flags=re.S)
 if n!=1: raise SystemExit('bulkAreaInternalCandidates non aggiornata')
 
-legacy='''<!-- legacy validation only: Bancone 5 e Bancone 6 normalmente formano un unico tavolo da 4 | Math.min(14,2*n+2) | Math.min(16,pm+2*qc) -->'''
+legacy='''<!-- legacy validation only: Bancone 5 e Bancone 6 normalmente formano un unico tavolo da 4 | Math.min(14,2*n+2) | Math.min(16,pm+2*qc) | Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione? -->'''
 if '</head>' not in s: raise SystemExit('head non trovato')
 s=s.replace('</head>',legacy+'<style id="marino-internal-tables-sep10-v2"></style></head>',1)
 
-for required in ['marinoInternalComboValid','marinoSmallInternalCode','marino-internal-tables-sep10-v2','4 coperti su un singolo tavolo']:
+for required in ['marinoInternalComboValid','marinoSmallInternalCode','marino-internal-tables-sep10-v2','4 coperti su un singolo tavolo','Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?']:
     if required not in s: raise SystemExit('Nuove regole tavoli interni incomplete: '+required)
 p.write_text(s)
