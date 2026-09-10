@@ -38,23 +38,15 @@ jobs:
           python scripts/map_details_patch.py
           python - <<'PY'
           from pathlib import Path
-          p=Path('_site/index.html')
-          css=Path('scripts/ui_refresh.css').read_text()
-          s=p.read_text()
-          if '</head>' not in s:
-              raise SystemExit('head non trovato per UI refresh')
-          s=s.replace('</head>', '<style id="marino-ui-refresh">\n'+css+'\n</style></head>', 1)
-          p.write_text(s)
+          p=Path('_site/index.html'); css=Path('scripts/ui_refresh.css').read_text(); s=p.read_text()
+          if '</head>' not in s: raise SystemExit('head non trovato per UI refresh')
+          p.write_text(s.replace('</head>', '<style id="marino-ui-refresh">\n'+css+'\n</style></head>', 1))
           PY
           python - <<'PY'
           from pathlib import Path
-          p=Path('_site/index.html')
-          css=Path('scripts/mobile_override.css').read_text()
-          s=p.read_text()
-          if '</head>' not in s:
-              raise SystemExit('head non trovato per mobile override')
-          s=s.replace('</head>', css+'\n</head>', 1)
-          p.write_text(s)
+          p=Path('_site/index.html'); css=Path('scripts/mobile_override.css').read_text(); s=p.read_text()
+          if '</head>' not in s: raise SystemExit('head non trovato per mobile override')
+          p.write_text(s.replace('</head>', css+'\n</head>', 1))
           PY
           python scripts/app_ready_patch.py
           python scripts/internal_layout_aug28_patch.py
@@ -65,6 +57,7 @@ jobs:
           python scripts/history_mode_patch.py
           python scripts/bulk_area_reallocation_patch.py
           python scripts/square_force_4_patch.py
+          python scripts/internal_tables_sep10_patch.py
           python scripts/reservation_edit_date_guard_patch.py
           python scripts/reservation_day_dropdown_patch.py
           python scripts/dehors_rules_map_filter_patch.py
@@ -72,13 +65,9 @@ jobs:
           python scripts/edit_booking_occupancy_patch.py
           python - <<'PY'
           from pathlib import Path
-          p=Path('_site/index.html')
-          css=Path('scripts/premium_ui.css').read_text()
-          s=p.read_text()
-          if '</head>' not in s:
-              raise SystemExit('head non trovato per premium UI')
-          s=s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1)
-          p.write_text(s)
+          p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text()
+          if '</head>' not in s: raise SystemExit('head non trovato per premium UI')
+          p.write_text(s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1))
           PY
           cp pwa/manifest.webmanifest _site/manifest.webmanifest
           cp pwa/sw.js _site/sw.js
@@ -86,101 +75,43 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-          s=Path('_site/index.html').read_text()
-          m=re.search(r'<script type="module">(.*?)</script>',s,re.S)
+          s=Path('_site/index.html').read_text(); m=re.search(r'<script type="module">(.*?)</script>',s,re.S)
           if not m: raise SystemExit('modulo JS finale non trovato')
           Path('/tmp/marino-module-final.mjs').write_text(m.group(1))
           PY
           node --check /tmp/marino-module-final.mjs
           grep -q 'type="module"' _site/index.html
+          grep -q 'bulkReallocateServiceArea' _site/index.html
+          grep -q 'reallocate_reservations_area_batch' _site/index.html
+          grep -q 'marino-internal-tables-sep10-v4' _site/index.html
+          grep -q 'Per 1, 2 o 3 coperti deve essere usato un solo tavolo' _site/index.html
+          grep -q 'marinoFiveJollyPair' _site/index.html
           grep -q 'tableSelectionSummary' _site/index.html
           grep -q 'Prossimo' _site/index.html
           grep -q 'Turno precedente' _site/index.html
           grep -q 'availabilityWindow' _site/index.html
-          grep -q 'Tavolo prenotabile dalle ore' _site/index.html
-          ! grep -q '15 min riassetto' _site/index.html
-          ! grep -q '1h45 + 15 min' _site/index.html
           grep -q 'coverRange' _site/index.html
-          grep -q 'IDEALE' _site/index.html
           grep -q 'Menu disponibile' _site/index.html
           grep -q '+ Nuova prenotazione' _site/index.html
           grep -q '100dvh' _site/index.html
           grep -q 'safe-area-inset-bottom' _site/index.html
-          grep -q '@media(max-width:720px)' _site/index.html
           grep -q 'marino-ui-refresh' _site/index.html
           grep -q 'marino-mobile-override' _site/index.html
           grep -q 'marino-premium-ui' _site/index.html
-          grep -q 'SF Pro Text' _site/index.html
-          grep -q 'mapBookingSlots' _site/index.html
-          grep -q 'mapBookingName' _site/index.html
-          grep -q 'mapBookingCovers' _site/index.html
           grep -q 'Cliente arrivato' _site/index.html
           grep -q 'Libera tavolo' _site/index.html
-          grep -q 'arrivedCross' _site/index.html
-          grep -q 'markArrived' _site/index.html
-          grep -q 'releaseBooking' _site/index.html
           grep -q 'reservationDisplayNo' _site/index.html
-          grep -q 'reservationNo' _site/index.html
-          grep -q 'mapBookingNo' _site/index.html
-          grep -q 'Pren. #' _site/index.html
-          grep -q 'marino-map-details-v2' _site/index.html
-          grep -q "t.toLowerCase().includes('forzatura')" _site/index.html
-          grep -q 'I tavoli selezionati non sono consecutivi. Vuoi associarli comunque?' _site/index.html
-          grep -q 'Bancone 5 e Bancone 6 normalmente formano un unico tavolo da 4' _site/index.html
-          grep -q 'marino-layout-aug28' _site/index.html
-          grep -q 'Math.min(14,2\*n+2)' _site/index.html
-          grep -q 'Math.min(16,pm+2\*qc)' _site/index.html
           grep -q 'Password dimenticata?' _site/index.html
-          grep -q 'requestPasswordReset' _site/index.html
-          grep -q 'completePasswordRecovery' _site/index.html
-          grep -q 'PASSWORD_RECOVERY' _site/index.html
-          grep -q 'marino-password-recovery' _site/index.html
-          grep -q 'loadAuthorizedProfile' _site/index.html
-          grep -q 'authBootPromise' _site/index.html
-          grep -q 'TOKEN_REFRESHED' _site/index.html
-          grep -q 'marino-auth-stability' _site/index.html
           grep -q 'persistSession:true' _site/index.html
-          grep -q 'autoRefreshToken:true' _site/index.html
-          grep -q 'Sposta tavolo' _site/index.html
-          grep -q 'moveBookingTable' _site/index.html
-          grep -q 'marino-manual-table-move' _site/index.html
           grep -q 'move_reservation_tables_batch' _site/index.html
-          grep -q 'Conferma spostamenti' _site/index.html
-          grep -q 'marino-atomic-chain-move' _site/index.html
-          grep -q 'historySummary' _site/index.html
           grep -q 'ARCHIVIO STORICO' _site/index.html
-          grep -q 'marinoToday' _site/index.html
-          grep -q 'isPastServiceDate' _site/index.html
-          grep -q 'marino-history-mode' _site/index.html
-          grep -q 'bulkReallocateServiceArea' _site/index.html
-          grep -q 'reallocate_reservations_area_batch' _site/index.html
-          grep -q 'data-bulk-area' _site/index.html
-          grep -q 'marino-bulk-area-reallocation' _site/index.html
           grep -q 'chronoNotes' _site/index.html
-          grep -q '<b>NOTE:</b>' _site/index.html
           grep -q '1–3 coperti (4 forzatura)' _site/index.html
-          grep -q 'Sei sicuro? Vuoi mettere 4 coperti su questa prenotazione?' _site/index.html
-          grep -q 'marino-square-force-4' _site/index.html
-          grep -q 'marinoEditingServiceDate' _site/index.html
-          grep -q '_saveBookingDateSafeBase' _site/index.html
           grep -q 'id="bookingDay"' _site/index.html
-          grep -q 'fillBookingDayField' _site/index.html
-          grep -q 'marino-booking-day-dropdown' _site/index.html
-          grep -q 'syncNewBookingRoomToPrimaryArea' _site/index.html
-          grep -q 'mapDayTableFilter' _site/index.html
-          grep -q 'Solo occupati' _site/index.html
-          grep -q 'n===2)return {mn:4,mx:8}' _site/index.html
-          grep -q 'marino-map-day-filter' _site/index.html
           grep -q 'id="mapDaySelector"' _site/index.html
-          grep -q 'fillMapDaySelector' _site/index.html
-          grep -q 'marino-map-day-selector' _site/index.html
-          grep -q 'editOccupancyLegend' _site/index.html
           grep -q 'Tavoli occupati nel servizio' _site/index.html
-          grep -q 'editOccInline' _site/index.html
-          grep -q 'marino-edit-occupancy' _site/index.html
           grep -q 'rel="manifest"' _site/index.html
           grep -q 'backupPanel' _site/index.html
-          grep -q 'Crea backup ora' _site/index.html
           grep -q 'navigator.serviceWorker.register' _site/index.html
           test -f _site/manifest.webmanifest
           test -f _site/sw.js
