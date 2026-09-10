@@ -57,7 +57,6 @@ jobs:
           python scripts/history_mode_patch.py
           python scripts/bulk_area_reallocation_patch.py
           python scripts/square_force_4_patch.py
-          python scripts/internal_tables_sep10_patch.py
           python scripts/reservation_edit_date_guard_patch.py
           python scripts/reservation_day_dropdown_patch.py
           python scripts/dehors_rules_map_filter_patch.py
