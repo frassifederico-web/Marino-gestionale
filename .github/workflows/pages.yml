@@ -63,6 +63,7 @@ jobs:
           python scripts/map_day_selector_patch.py
           python scripts/edit_booking_occupancy_patch.py
           python scripts/internal_tables_sep10_patch.py
+          python scripts/force_capacity_hotfix.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text()
@@ -87,6 +88,10 @@ jobs:
           grep -q '__B123_TRIPLE__' _site/index.html
           grep -q 'marinoForce4Single' _site/index.html
           grep -q 'marinoFiveJollyPair' _site/index.html
+          grep -q 'party===5&&selected.length!==2' _site/index.html
+          grep -q 'Tavoli disponibili primo turno' _site/index.html
+          grep -q 'Tavoli disponibili secondo turno' _site/index.html
+          grep -q 'grid-template-columns:1fr 18mm 18mm 18mm' _site/index.html
           grep -q 'tableSelectionSummary' _site/index.html
           grep -q 'Prossimo' _site/index.html
           grep -q 'Turno precedente' _site/index.html
