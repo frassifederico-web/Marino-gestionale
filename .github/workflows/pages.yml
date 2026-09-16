@@ -90,8 +90,8 @@ jobs:
           grep -q 'marinoFiveJollyPair' _site/index.html
           grep -q 'Vuoi forzare la prenotazione?' _site/index.html
           grep -q "party===4&&codes.length===1" _site/index.html
+          grep -q "party===4&&codes.length!==2" _site/index.html
           grep -q 'return _saveBookingDehorsRulesBase(true)' _site/index.html
-          ! grep -q 'Vuoi inserire quattro coperti su due tavoli?' _site/index.html
           grep -q "party===5&&n!==2" _site/index.html
           grep -q 'Tavoli disponibili primo turno' _site/index.html
           grep -q 'Tavoli disponibili secondo turno' _site/index.html
