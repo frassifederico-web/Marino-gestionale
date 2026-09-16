@@ -4,17 +4,17 @@ import re
 p=Path('_site/index.html')
 s=p.read_text()
 
-# Dehors: regola aggiornata.
+# Dehors: regola definitiva.
 # - 1/2/3 coperti: un solo tavolo standard.
+# - 4 coperti: due tavoli standard.
 # - 4 coperti su un solo tavolo: solo con forzatura esplicita.
-# - la precedente richiesta 4 coperti su 2 tavoli viene rimossa.
 # - 5 coperti: esattamente due tavoli.
 new_hint=r'''function selectionForceHint(){
   const codes=[...selected],party=Number($('party')?.value||0),room=$('room')?.value||'';
   if(room==='dehors'){
     if(party>=1&&party<=3&&codes.length!==1)return '⚠ Nel Dehors '+party+' coperti richiedono 1 tavolo.';
     if(party===4&&codes.length===1)return '⚠ 4 coperti su un tavolo nel Dehors: consentito solo con forzatura.';
-    if(party===4&&codes.length!==1)return '⚠ Nel Dehors, per 4 coperti, seleziona 1 tavolo e usa la forzatura.';
+    if(party===4&&codes.length!==2)return '⚠ Nel Dehors 4 coperti richiedono 2 tavoli.';
     if(party===5&&codes.length!==2)return '⚠ Nel Dehors 5 coperti richiedono esattamente 2 tavoli.';
     return '';
   }
@@ -40,10 +40,13 @@ saveBooking=async function(force){
       return alert('Nel Dehors una prenotazione da '+party+' coperti deve essere inserita su 1 tavolo.');
     }
     if(party===4){
-      if(n!==1)return alert('Nel Dehors 4 coperti possono essere messi su 1 tavolo solo tramite forzatura. Seleziona un solo tavolo.');
-      if(!force){
-        if(!confirm('Vuoi forzare la prenotazione?'))return;
-        return _saveBookingDehorsRulesBase(true);
+      if(n===1){
+        if(!force){
+          if(!confirm('Vuoi forzare la prenotazione?'))return;
+          return _saveBookingDehorsRulesBase(true);
+        }
+      }else if(n!==2){
+        return alert('Nel Dehors una prenotazione da 4 coperti deve essere inserita su 2 tavoli.');
       }
     }
     if(party===5&&n!==2){
@@ -72,11 +75,9 @@ if 'grid-template-columns:1fr 18mm 18mm 18mm' not in s:
     if cssneedle not in s: raise SystemExit('CSS footerSpace non trovato')
     s=s.replace(cssneedle,cssadd,1)
 
-checks=["party===4&&codes.length===1","Vuoi forzare la prenotazione?","return _saveBookingDehorsRulesBase(true)","party===5&&n!==2",'Tavoli disponibili primo turno']
+checks=["party===4&&codes.length===1","party===4&&codes.length!==2","Vuoi forzare la prenotazione?","return _saveBookingDehorsRulesBase(true)","party===5&&n!==2",'Tavoli disponibili primo turno']
 for x in checks:
     if x not in s: raise SystemExit('Verifica mancante: '+x)
-if 'Vuoi inserire quattro coperti su due tavoli?' in s:
-    raise SystemExit('Vecchio comando 4 coperti su 2 tavoli ancora presente')
 
 scripts=re.findall(r'<script type="module">(.*?)</script>',s,re.S)
 if len(scripts)!=1: raise SystemExit(f'Atteso 1 script module, trovati {len(scripts)}')
