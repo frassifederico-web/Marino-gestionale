@@ -11,7 +11,7 @@ s=p.read_text()
 # - 5 coperti: esattamente due tavoli.
 new_hint=r'''function selectionForceHint(){
   const codes=[...selected],party=Number($('party')?.value||0),room=$('room')?.value||'';
-  if(room==='dehors'){
+  if(room==='dehors'||room==='dehors_esterno'){
     if(party>=1&&party<=3&&codes.length!==1)return '⚠ Nel Dehors '+party+' coperti richiedono 1 tavolo.';
     if(party===4&&codes.length===1)return '⚠ 4 coperti su un tavolo nel Dehors: consentito solo con forzatura.';
     if(party===4&&codes.length!==2)return '⚠ Nel Dehors 4 coperti richiedono 2 tavoli.';
