@@ -56,9 +56,9 @@ function marinoPickerSection(title,subtitle,items,kind){
     const count=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).length;
     let cl=count?'busy':'free';
     if(selected.includes(t.code))cl+=' selected';
-    return '<button type="button" class="table '+cl+'" onclick="toggleTable(''+t.code+'')"><b>'+esc(t.label)+'</b><div class="muted">'+(count?'Già usato nella serata':'Libero')+'</div></button>';
+    return '<button type="button" class="table '+cl+'" data-marino-code="'+esc(t.code)+'"><b>'+esc(t.label)+'</b><div class="muted">'+(count?'Già usato nella serata':'Libero')+'</div></button>';
   }).join('');
-  wrap.appendChild(grid);
+  grid.querySelectorAll('[data-marino-code]').forEach(btn=>btn.addEventListener('click',()=>toggleTable(btn.dataset.marinoCode)));\n  wrap.appendChild(grid);
   return wrap;
 }
 function marinoRenderAllBookingTables(){
