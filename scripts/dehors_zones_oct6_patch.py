@@ -152,6 +152,6 @@ css=r'''<style id="marino-booking-zones-ui">
 if 'marino-booking-zones-ui' not in s:
     if '</head>' not in s: raise SystemExit('head non trovato')
     s=s.replace('</head>',css+'</head>',1)
-for item in ['marinoRenderAllBookingTables','DEHORS ESTERNO','12 tavoli · opzionale dal 6 ottobre','marino-picker-dehors-esterno']:
+for item in ['marinoRenderAllBookingTables','DEHORS ESTERNO','Tavoli 61–66 · 71–76','marino-picker-dehors-esterno']:
     if item not in s: raise SystemExit('Verifica mancante: '+item)
 p.write_text(s)
