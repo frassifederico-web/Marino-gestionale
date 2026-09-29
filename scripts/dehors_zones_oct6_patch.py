@@ -5,7 +5,7 @@ s = p.read_text()
 
 s = s.replace(
     '<option value="dehors">Dehors</option>',
-    '<option value="dehors">Dehors interno</option><option value="dehors_esterno">Dehors esterno</option>',
+    '<option value="dehors_esterno">Dehors esterno</option>',
     1
 )
 
@@ -19,7 +19,7 @@ function marinoIsOutdoorDehorsTable(t){return !!t&&t.area==='dehors'&&MARINO_DEH
 function marinoTableGroup(t){
   if(t.area==='interno')return 'interno';
   if(marinoIsOutdoorDehorsTable(t))return 'dehors_esterno';
-  return 'dehors_interno';
+  return null;
 }
 function marinoPickerCardForTable(t){
   const picker=$('picker');if(!picker)return null;
@@ -65,7 +65,7 @@ function marinoPickerSection(title,subtitle,items,kind){
 function marinoRenderAllBookingTables(){
   const picker=$('picker');if(!picker)return;
   picker.innerHTML='';
-  const groups={interno:[],dehors_interno:[],dehors_esterno:[]};
+  const groups={interno:[],dehors_esterno:[]};
   allTables.filter(t=>t.active).forEach(t=>{
     const g=marinoTableGroup(t);
     if(groups[g])groups[g].push(t);
@@ -110,7 +110,7 @@ editBooking=function(id){
     if(marinoDehorsZonesEnabled()){
       const codes=tableCodesForRes(id)||[];
       if(codes.length&&codes.every(c=>MARINO_DEHORS_OUTDOOR_CODES.has(String(c))))$('room').value='dehors_esterno';
-      else if(codes.some(c=>String(c).startsWith('D')))$('room').value='dehors';
+      else if(codes.some(c=>String(c).startsWith('D')))$('room').value='interno';
       renderPicker();
     }
   },0);
