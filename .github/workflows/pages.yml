@@ -64,6 +64,7 @@ jobs:
           python scripts/edit_booking_occupancy_patch.py
           python scripts/internal_tables_sep10_patch.py
           python scripts/force_capacity_hotfix.py
+          python scripts/dehors_zones_oct6_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text()
@@ -95,6 +96,11 @@ jobs:
           grep -q "party===5&&n!==2" _site/index.html
           grep -q 'Tavoli disponibili primo turno' _site/index.html
           grep -q 'Tavoli disponibili secondo turno' _site/index.html
+          grep -q 'Dehors interno' _site/index.html
+          grep -q 'Dehors esterno' _site/index.html
+          grep -q 'MARINO_DEHORS_OUTDOOR_CODES' _site/index.html
+          grep -q '2026-10-06' _site/index.html
+          grep -q 'marinoStorageArea' _site/index.html
           grep -q 'grid-template-columns:1fr 18mm 18mm 18mm' _site/index.html
           grep -q 'tableSelectionSummary' _site/index.html
           grep -q 'Prossimo' _site/index.html
