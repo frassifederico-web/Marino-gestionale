@@ -68,13 +68,15 @@ function marinoRenderAllBookingTables(){
   const groups={interno:[],dehors_esterno:[]};
   allTables.filter(t=>t.active).forEach(t=>{
     const g=marinoTableGroup(t);
-    if(groups[g])groups[g].push(t);
+    if(g&&groups[g])groups[g].push(t);
   });
-  picker.appendChild(marinoPickerSection('INTERNO','Tavoli interni',groups.interno,'marino-picker-interno'));
-  picker.appendChild(marinoPickerSection('DEHORS INTERNO','Tavoli del dehors principale',groups.dehors_interno,'marino-picker-dehors-interno'));
+  const layout=document.createElement('div');
+  layout.className='marino-picker-two-zones';
+  layout.appendChild(marinoPickerSection('INTERNO','Tavoli interni',groups.interno,'marino-picker-interno'));
   if(marinoDehorsZonesEnabled()){
-    picker.appendChild(marinoPickerSection('DEHORS ESTERNO','12 tavoli · opzionale dal 6 ottobre',groups.dehors_esterno,'marino-picker-dehors-esterno'));
+    layout.appendChild(marinoPickerSection('DEHORS ESTERNO','Tavoli 61–66 · 71–76',groups.dehors_esterno,'marino-picker-dehors-esterno'));
   }
+  picker.appendChild(layout);
 }
 const _renderPickerDehorsZonesBase=renderPicker;
 renderPicker=function(){
@@ -145,7 +147,7 @@ css=r'''<style id="marino-booking-zones-ui">
 .marino-picker-interno .table.free{background:var(--greenbg);border-color:#8ab86d;color:var(--green)}\n.marino-picker-dehors-esterno{background:#e5eef7;border-color:#7198bd}.marino-picker-dehors-esterno .marino-picker-section-head{color:#063f78}
 .marino-picker-dehors-esterno .table.free{background:#d7e7f5;border-color:#7198bd;color:#063f78}
 .marino-picker-dehors-esterno .table.busy{background:#f1d4cf;border-color:#b86d61;color:#7d241b}
-@media(max-width:720px){.marino-picker-two-zones{grid-template-columns:1fr}.marino-picker-section{padding:8px}.marino-picker-section-head{flex-direction:column;gap:2px}}
+@media(max-width:720px){.marino-picker-two-zones{grid-template-columns:1fr}.marino-picker-two-zones{grid-template-columns:1fr}.marino-picker-section{padding:8px}.marino-picker-section-head{flex-direction:column;gap:2px}}
 </style>'''
 if 'marino-booking-zones-ui' not in s:
     if '</head>' not in s: raise SystemExit('head non trovato')
