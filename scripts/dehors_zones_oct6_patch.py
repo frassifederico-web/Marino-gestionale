@@ -72,7 +72,7 @@ function marinoRenderAllBookingTables(){
   picker.appendChild(marinoPickerSection('INTERNO','20 tavoli',groups.interno,'marino-picker-interno'));
   picker.appendChild(marinoPickerSection('DEHORS INTERNO','Tavoli del dehors principale',groups.dehors_interno,'marino-picker-dehors-interno'));
   if(marinoDehorsZonesEnabled()){
-    picker.appendChild(marinoPickerSection('DEHORS ESTERNO','12 tavoli · opzionale dal 6 ottobre',''+groups.dehors_esterno,'marino-picker-dehors-esterno'));
+    picker.appendChild(marinoPickerSection('DEHORS ESTERNO','12 tavoli · opzionale dal 6 ottobre',groups.dehors_esterno,'marino-picker-dehors-esterno'));
   }
 }
 const _renderPickerDehorsZonesBase=renderPicker;
