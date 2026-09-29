@@ -134,8 +134,7 @@ refreshDehorsZoneMenu();
 '''
 marker='function _renderMapBase'
 if marker not in s: raise SystemExit('Punto inserimento regole zone dehors non trovato')
-if 'MARINO_DEHORS_OUTDOOR_CODES' not in s:s=s.replace(marker,helper+'
-'+marker,1)
+if 'MARINO_DEHORS_OUTDOOR_CODES' not in s:s=s.replace(marker,helper+chr(10)+marker,1)
 if "p_area:$('room').value" in s:s=s.replace("p_area:$('room').value","p_area:marinoStorageArea($('room').value)",1)
 elif "p_area:marinoStorageArea($('room').value)" not in s:raise SystemExit('Campo p_area non trovato')
 css=r'''<style id="marino-booking-zones-ui">
