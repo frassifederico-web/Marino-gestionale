@@ -3,10 +3,6 @@ from pathlib import Path
 p = Path('_site/index.html')
 s = p.read_text()
 
-# Dal 6 ottobre 2026:
-# - le nuove prenotazioni partono sempre da Interno (20 tavoli);
-# - il Dehors esterno è opzionale e mostra solo 61-66 e 71-76 (12 tavoli);
-# - il vecchio valore "dehors" resta disponibile solo per modificare prenotazioni storiche.
 s = s.replace(
     '<option value="dehors">Dehors</option>',
     '<option value="dehors">Dehors interno</option><option value="dehors_esterno">Dehors esterno</option>',
@@ -20,6 +16,11 @@ function marinoBookingZoneDate(){return $('bookingDay')?.value||$('date')?.value
 function marinoDehorsZonesEnabled(){return marinoBookingZoneDate()>=MARINO_DEHORS_ZONE_START}
 function marinoStorageArea(room){return room==='dehors_esterno'?'dehors':room}
 function marinoIsOutdoorDehorsTable(t){return !!t&&t.area==='dehors'&&MARINO_DEHORS_OUTDOOR_CODES.has(String(t.code||''))}
+function marinoTableGroup(t){
+  if(t.area==='interno')return 'interno';
+  if(marinoIsOutdoorDehorsTable(t))return 'dehors_esterno';
+  return 'dehors_interno';
+}
 function marinoPickerCardForTable(t){
   const picker=$('picker');if(!picker)return null;
   const label=String(t?.label||'').trim(),code=String(t?.code||'').trim();
@@ -30,61 +31,76 @@ function marinoPickerCardForTable(t){
 }
 function refreshDehorsZoneMenu(){
   const el=$('room');if(!el)return;
-  let internal=[...el.options].find(o=>o.value==='dehors');
   let outdoor=[...el.options].find(o=>o.value==='dehors_esterno');
   if(!outdoor){
     outdoor=document.createElement('option');
     outdoor.value='dehors_esterno';
     outdoor.textContent='Dehors esterno';
-    if(internal)el.insertBefore(outdoor,internal.nextSibling);else el.appendChild(outdoor);
+    el.appendChild(outdoor);
   }
   outdoor.disabled=!marinoDehorsZonesEnabled();
+  const internal=[...el.options].find(o=>o.value==='dehors');
   if(internal)internal.textContent='Dehors interno';
-  // Dal 6/10 il vecchio Dehors non è una destinazione per le nuove prenotazioni:
-  // resta selezionabile solo quando si sta modificando una prenotazione storica.
-  if(!marinoDehorsZonesEnabled()){
-    if(internal)internal.hidden=false;
-  }else if(!editing&&internal){
-    internal.hidden=true;
-    if(el.value==='dehors')el.value='interno';
+  if(!marinoDehorsZonesEnabled()&&el.value==='dehors_esterno')el.value='dehors';
+}
+function marinoPickerSection(title,subtitle,items,kind){
+  const wrap=document.createElement('div');
+  wrap.className='marino-picker-section '+kind;
+  const h=document.createElement('div');
+  h.className='marino-picker-section-head';
+  h.innerHTML='<b>'+title+'</b><span>'+subtitle+'</span>';
+  wrap.appendChild(h);
+  const grid=document.createElement('div');
+  grid.className='tables';
+  grid.innerHTML=items.map(t=>{
+    const count=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).length;
+    let cl=count?'busy':'free';
+    if(selected.includes(t.code))cl+=' selected';
+    return '<button type="button" class="table '+cl+'" onclick="toggleTable(''+t.code+'')"><b>'+esc(t.label)+'</b><div class="muted">'+(count?'Già usato nella serata':'Libero')+'</div></button>';
+  }).join('');
+  wrap.appendChild(grid);
+  return wrap;
+}
+function marinoRenderAllBookingTables(){
+  const picker=$('picker');if(!picker)return;
+  picker.innerHTML='';
+  const groups={interno:[],dehors_interno:[],dehors_esterno:[]};
+  allTables.filter(t=>t.active).forEach(t=>{
+    const g=marinoTableGroup(t);
+    if(groups[g])groups[g].push(t);
+  });
+  picker.appendChild(marinoPickerSection('INTERNO','20 tavoli',groups.interno,'marino-picker-interno'));
+  picker.appendChild(marinoPickerSection('DEHORS INTERNO','Tavoli del dehors principale',groups.dehors_interno,'marino-picker-dehors-interno'));
+  if(marinoDehorsZonesEnabled()){
+    picker.appendChild(marinoPickerSection('DEHORS ESTERNO','12 tavoli · opzionale dal 6 ottobre',''+groups.dehors_esterno,'marino-picker-dehors-esterno'));
   }
 }
-function marinoTableMatchesBookingRoom(t,room){
-  if(!t)return false;
-  if(room==='dehors_esterno')return marinoIsOutdoorDehorsTable(t);
-  if(room==='dehors')return t.area==='dehors'&&!marinoIsOutdoorDehorsTable(t);
-  return t.area===room;
-}
-
 const _renderPickerDehorsZonesBase=renderPicker;
 renderPicker=function(){
   const roomEl=$('room'),chosen=roomEl?.value||'interno';
-  const renderRoom=(chosen==='dehors_esterno')?'dehors':chosen;
-  if(roomEl)roomEl.value=renderRoom;
+  if(roomEl&&chosen==='dehors_esterno')roomEl.value='dehors';
+  if(marinoDehorsZonesEnabled()){
+    marinoRenderAllBookingTables();
+    if(roomEl)roomEl.value=chosen;
+    refreshDehorsZoneMenu();
+    return;
+  }
   const out=_renderPickerDehorsZonesBase();
   if(roomEl)roomEl.value=chosen;
   refreshDehorsZoneMenu();
-  if(marinoDehorsZonesEnabled()&&(chosen==='dehors'||chosen==='dehors_esterno')){
-    allTables.filter(t=>t.area==='dehors').forEach(t=>{
-      const card=marinoPickerCardForTable(t);
-      if(card)card.style.display=marinoTableMatchesBookingRoom(t,chosen)?'':'none';
-    });
-  }
   return out;
 };
-
 const _syncNewBookingRoomToPrimaryAreaZonesBase=syncNewBookingRoomToPrimaryArea;
 syncNewBookingRoomToPrimaryArea=async function(){
   const out=await _syncNewBookingRoomToPrimaryAreaZonesBase();
   refreshDehorsZoneMenu();
   if(!editing&&marinoDehorsZonesEnabled()){
-    $('room').value='interno';
+    $('room').value=$('primaryArea')?.value||'interno';
     selected=[];
     renderPicker();
   }
   return out;
 };
-
 const _editBookingDehorsZonesBase=editBooking;
 editBooking=function(id){
   const out=_editBookingDehorsZonesBase(id);
@@ -92,61 +108,47 @@ editBooking=function(id){
     refreshDehorsZoneMenu();
     if(marinoDehorsZonesEnabled()){
       const codes=tableCodesForRes(id)||[];
-      if(codes.length&&codes.every(c=>MARINO_DEHORS_OUTDOOR_CODES.has(String(c)))){
-        $('room').value='dehors_esterno';
-      }else if(codes.some(c=>String(c).startsWith('D'))){
-        $('room').value='dehors';
-        const old=[...$('room').options].find(o=>o.value==='dehors');if(old)old.hidden=false;
-      }
+      if(codes.length&&codes.every(c=>MARINO_DEHORS_OUTDOOR_CODES.has(String(c))))$('room').value='dehors_esterno';
+      else if(codes.some(c=>String(c).startsWith('D')))$('room').value='dehors';
       renderPicker();
     }
   },0);
   return out;
 };
-
 const _saveBookingDehorsZonesBase=saveBooking;
 saveBooking=async function(force){
   const room=$('room')?.value||'';
   if(room==='dehors_esterno'&&!marinoDehorsZonesEnabled()){
     return alert('Il dehors esterno è prenotabile dal 6 ottobre 2026.');
   }
-  if(room==='dehors_esterno'){
-    const selectedTables=allTables.filter(t=>selected.includes(t.code));
-    if(!selectedTables.length||selectedTables.some(t=>!marinoIsOutdoorDehorsTable(t))){
-      return alert('Per il dehors esterno seleziona esclusivamente i tavoli 61–66 e 71–76.');
-    }
-  }
-  return _saveBookingDehorsZonesBase(force);
+  if(room==='dehors_esterno')$('room').value='dehors';
+  const out=await _saveBookingDehorsZonesBase(force);
+  if(room==='dehors_esterno'&&$('room'))$('room').value='dehors';
+  return out;
 };
-
-if($('room')){
-  $('room').addEventListener('change',()=>{selected=[];refreshDehorsZoneMenu();renderPicker()});
-}
+if($('room'))$('room').addEventListener('change',()=>{selected=[];refreshDehorsZoneMenu();renderPicker()});
 if($('bookingDay'))$('bookingDay').addEventListener('change',()=>{refreshDehorsZoneMenu()});
 if($('date'))$('date').addEventListener('change',()=>{refreshDehorsZoneMenu()});
 refreshDehorsZoneMenu();
 '''
-
-marker = 'function _renderMapBase'
-if marker not in s:
-    raise SystemExit('Punto inserimento regole zone dehors non trovato')
-if 'MARINO_DEHORS_OUTDOOR_CODES' not in s:
-    s = s.replace(marker, helper + '\n' + marker, 1)
-
-if "p_area:$('room').value" in s:
-    s = s.replace("p_area:$('room').value", "p_area:marinoStorageArea($('room').value)", 1)
-elif "p_area:marinoStorageArea($('room').value)" not in s:
-    raise SystemExit('Campo p_area non trovato per normalizzazione dehors esterno')
-
-checks = [
-    'Dehors interno', 'Dehors esterno', '2026-10-06',
-    "room').value='interno",
-    'D7','D18','marinoStorageArea',
-    'Per il dehors esterno seleziona esclusivamente i tavoli 61–66 e 71–76.',
-    'MARINO_DEHORS_OUTDOOR_CODES'
-]
-for item in checks:
-    if item not in s:
-        raise SystemExit('Verifica zone dehors mancante: '+item)
-
+marker='function _renderMapBase'
+if marker not in s: raise SystemExit('Punto inserimento regole zone dehors non trovato')
+if 'MARINO_DEHORS_OUTDOOR_CODES' not in s:s=s.replace(marker,helper+'\n'+marker,1)
+if "p_area:$('room').value" in s:s=s.replace("p_area:$('room').value","p_area:marinoStorageArea($('room').value)",1)
+elif "p_area:marinoStorageArea($('room').value)" not in s:raise SystemExit('Campo p_area non trovato')
+css=r'''<style id="marino-booking-zones-ui">
+.marino-picker-section{margin-top:12px;padding:10px;border-radius:14px;border:1px solid #c8d7df;background:#f7fbf5}
+.marino-picker-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;color:#245b2d}
+.marino-picker-section-head b{font-size:13px;letter-spacing:.04em}.marino-picker-section-head span{font-size:11px;color:#64756a}
+.marino-picker-dehors-interno{background:#edf7e9;border-color:#9cc18d}.marino-picker-dehors-interno .marino-picker-section-head{color:#2f6b38}
+.marino-picker-dehors-esterno{background:#e5eef7;border-color:#7198bd}.marino-picker-dehors-esterno .marino-picker-section-head{color:#063f78}
+.marino-picker-dehors-esterno .table.free{background:#d7e7f5;border-color:#7198bd;color:#063f78}
+.marino-picker-dehors-esterno .table.busy{background:#f1d4cf;border-color:#b86d61;color:#7d241b}
+@media(max-width:720px){.marino-picker-section{padding:8px}.marino-picker-section-head{flex-direction:column;gap:2px}}
+</style>'''
+if 'marino-booking-zones-ui' not in s:
+    if '</head>' not in s: raise SystemExit('head non trovato')
+    s=s.replace('</head>',css+'</head>',1)
+for item in ['marinoRenderAllBookingTables','DEHORS ESTERNO','12 tavoli · opzionale dal 6 ottobre','marino-picker-dehors-esterno']:
+    if item not in s: raise SystemExit('Verifica mancante: '+item)
 p.write_text(s)
