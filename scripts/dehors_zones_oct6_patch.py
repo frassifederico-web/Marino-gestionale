@@ -58,7 +58,8 @@ function marinoPickerSection(title,subtitle,items,kind){
     if(selected.includes(t.code))cl+=' selected';
     return '<button type="button" class="table '+cl+'" data-marino-code="'+esc(t.code)+'"><b>'+esc(t.label)+'</b><div class="muted">'+(count?'Già usato nella serata':'Libero')+'</div></button>';
   }).join('');
-  grid.querySelectorAll('[data-marino-code]').forEach(btn=>btn.addEventListener('click',()=>toggleTable(btn.dataset.marinoCode)));\n  wrap.appendChild(grid);
+  grid.querySelectorAll('[data-marino-code]').forEach(btn=>btn.addEventListener('click',()=>toggleTable(btn.dataset.marinoCode)));
+  wrap.appendChild(grid);
   return wrap;
 }
 function marinoRenderAllBookingTables(){
@@ -133,7 +134,8 @@ refreshDehorsZoneMenu();
 '''
 marker='function _renderMapBase'
 if marker not in s: raise SystemExit('Punto inserimento regole zone dehors non trovato')
-if 'MARINO_DEHORS_OUTDOOR_CODES' not in s:s=s.replace(marker,helper+'\n'+marker,1)
+if 'MARINO_DEHORS_OUTDOOR_CODES' not in s:s=s.replace(marker,helper+'
+'+marker,1)
 if "p_area:$('room').value" in s:s=s.replace("p_area:$('room').value","p_area:marinoStorageArea($('room').value)",1)
 elif "p_area:marinoStorageArea($('room').value)" not in s:raise SystemExit('Campo p_area non trovato')
 css=r'''<style id="marino-booking-zones-ui">
