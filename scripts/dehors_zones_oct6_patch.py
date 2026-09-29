@@ -70,7 +70,7 @@ function marinoRenderAllBookingTables(){
     const g=marinoTableGroup(t);
     if(groups[g])groups[g].push(t);
   });
-  picker.appendChild(marinoPickerSection('INTERNO','20 tavoli',groups.interno,'marino-picker-interno'));
+  picker.appendChild(marinoPickerSection('INTERNO','Tavoli interni',groups.interno,'marino-picker-interno'));
   picker.appendChild(marinoPickerSection('DEHORS INTERNO','Tavoli del dehors principale',groups.dehors_interno,'marino-picker-dehors-interno'));
   if(marinoDehorsZonesEnabled()){
     picker.appendChild(marinoPickerSection('DEHORS ESTERNO','12 tavoli · opzionale dal 6 ottobre',groups.dehors_esterno,'marino-picker-dehors-esterno'));
@@ -142,7 +142,7 @@ css=r'''<style id="marino-booking-zones-ui">
 .marino-picker-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;color:#245b2d}
 .marino-picker-section-head b{font-size:13px;letter-spacing:.04em}.marino-picker-section-head span{font-size:11px;color:#64756a}
 .marino-picker-dehors-interno{background:#edf7e9;border-color:#9cc18d}.marino-picker-dehors-interno .marino-picker-section-head{color:#2f6b38}
-.marino-picker-dehors-esterno{background:#e5eef7;border-color:#7198bd}.marino-picker-dehors-esterno .marino-picker-section-head{color:#063f78}
+.marino-picker-interno .table.free{background:var(--greenbg);border-color:#8ab86d;color:var(--green)}\n.marino-picker-dehors-esterno{background:#e5eef7;border-color:#7198bd}.marino-picker-dehors-esterno .marino-picker-section-head{color:#063f78}
 .marino-picker-dehors-esterno .table.free{background:#d7e7f5;border-color:#7198bd;color:#063f78}
 .marino-picker-dehors-esterno .table.busy{background:#f1d4cf;border-color:#b86d61;color:#7d241b}
 @media(max-width:720px){.marino-picker-section{padding:8px}.marino-picker-section-head{flex-direction:column;gap:2px}}
