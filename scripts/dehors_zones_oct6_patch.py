@@ -138,14 +138,14 @@ if 'MARINO_DEHORS_OUTDOOR_CODES' not in s:s=s.replace(marker,helper+chr(10)+mark
 if "p_area:$('room').value" in s:s=s.replace("p_area:$('room').value","p_area:marinoStorageArea($('room').value)",1)
 elif "p_area:marinoStorageArea($('room').value)" not in s:raise SystemExit('Campo p_area non trovato')
 css=r'''<style id="marino-booking-zones-ui">
-.marino-picker-section{margin-top:12px;padding:10px;border-radius:14px;border:1px solid #c8d7df;background:#f7fbf5}
+.marino-picker-two-zones{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:12px;align-items:start}\n.marino-picker-section{margin-top:12px;padding:10px;border-radius:14px;border:1px solid #c8d7df;background:#f7fbf5}
 .marino-picker-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;color:#245b2d}
 .marino-picker-section-head b{font-size:13px;letter-spacing:.04em}.marino-picker-section-head span{font-size:11px;color:#64756a}
 .marino-picker-dehors-interno{background:#edf7e9;border-color:#9cc18d}.marino-picker-dehors-interno .marino-picker-section-head{color:#2f6b38}
 .marino-picker-interno .table.free{background:var(--greenbg);border-color:#8ab86d;color:var(--green)}\n.marino-picker-dehors-esterno{background:#e5eef7;border-color:#7198bd}.marino-picker-dehors-esterno .marino-picker-section-head{color:#063f78}
 .marino-picker-dehors-esterno .table.free{background:#d7e7f5;border-color:#7198bd;color:#063f78}
 .marino-picker-dehors-esterno .table.busy{background:#f1d4cf;border-color:#b86d61;color:#7d241b}
-@media(max-width:720px){.marino-picker-section{padding:8px}.marino-picker-section-head{flex-direction:column;gap:2px}}
+@media(max-width:720px){.marino-picker-two-zones{grid-template-columns:1fr}.marino-picker-section{padding:8px}.marino-picker-section-head{flex-direction:column;gap:2px}}
 </style>'''
 if 'marino-booking-zones-ui' not in s:
     if '</head>' not in s: raise SystemExit('head non trovato')
