@@ -58,7 +58,16 @@ function marinoPickerSection(title,subtitle,items,kind){
     if(selected.includes(t.code))cl+=' selected';
     return '<button type="button" class="table '+cl+'" data-marino-code="'+esc(t.code)+'"><b>'+esc(t.label)+'</b><div class="muted">'+(count?'Già usato nella serata':'Libero')+'</div></button>';
   }).join('');
-  grid.querySelectorAll('[data-marino-code]').forEach(btn=>btn.addEventListener('click',()=>toggleTable(btn.dataset.marinoCode)));
+  grid.querySelectorAll('[data-marino-code]').forEach(btn=>btn.addEventListener('click',()=>{
+    const code=btn.dataset.marinoCode;
+    const clicked=allTables.find(t=>String(t.code)===String(code));
+    const clickedGroup=marinoTableGroup(clicked);
+    const selectedGroups=selected.map(sc=>marinoTableGroup(allTables.find(t=>String(t.code)===String(sc)))).filter(Boolean);
+    if(!selected.includes(code)&&selectedGroups.length&&selectedGroups.some(g=>g!==clickedGroup)){
+      return alert('Non puoi unire tavoli Interno e Dehors esterno nella stessa prenotazione.');
+    }
+    toggleTable(code);
+  }));
   wrap.appendChild(grid);
   return wrap;
 }
@@ -145,7 +154,7 @@ css=r'''<style id="marino-booking-zones-ui">
 .marino-picker-section-head b{font-size:13px;letter-spacing:.04em}.marino-picker-section-head span{font-size:11px;color:#64756a}
 .marino-picker-dehors-interno{background:#edf7e9;border-color:#9cc18d}.marino-picker-dehors-interno .marino-picker-section-head{color:#2f6b38}
 .marino-picker-interno .table.free{background:var(--greenbg);border-color:#8ab86d;color:var(--green)}\n.marino-picker-dehors-esterno{background:#e5eef7;border-color:#7198bd}.marino-picker-dehors-esterno .marino-picker-section-head{color:#063f78}
-.marino-picker-dehors-esterno .table.free{background:#d7e7f5;border-color:#7198bd;color:#063f78}
+.marino-picker-dehors-esterno .table.free{background:#b9d9f5!important;border-color:#397bb8!important;color:#063f78!important}.marino-picker-dehors-esterno .table.free b{color:#063f78!important}
 .marino-picker-dehors-esterno .table.busy{background:#f1d4cf;border-color:#b86d61;color:#7d241b}
 @media(max-width:720px){.marino-picker-two-zones{grid-template-columns:1fr}.marino-picker-two-zones{grid-template-columns:1fr}.marino-picker-section{padding:8px}.marino-picker-section-head{flex-direction:column;gap:2px}}
 </style>'''
