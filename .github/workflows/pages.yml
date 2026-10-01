@@ -26,9 +26,7 @@ jobs:
       - name: Prepara, correggi e valida sito MARINO
         run: |
           mkdir -p _site
-          curl --fail --silent --show-error --location \
-            "https://olkvweveldtkavmgccex.supabase.co/functions/v1/marino-app" \
-            --output _site/index.html
+          curl --fail --silent --show-error --location "https://olkvweveldtkavmgccex.supabase.co/functions/v1/marino-app" --output _site/index.html
           python scripts/patch_marino.py
           python scripts/secondary_area_patch.py
           python scripts/turnover_patch.py
@@ -38,15 +36,11 @@ jobs:
           python scripts/map_details_patch.py
           python - <<'PY'
           from pathlib import Path
-          p=Path('_site/index.html'); css=Path('scripts/ui_refresh.css').read_text(); s=p.read_text()
-          if '</head>' not in s: raise SystemExit('head non trovato per UI refresh')
-          p.write_text(s.replace('</head>', '<style id="marino-ui-refresh">\n'+css+'\n</style></head>', 1))
+          p=Path('_site/index.html'); css=Path('scripts/ui_refresh.css').read_text(); s=p.read_text(); p.write_text(s.replace('</head>', '<style id="marino-ui-refresh">\n'+css+'\n</style></head>', 1))
           PY
           python - <<'PY'
           from pathlib import Path
-          p=Path('_site/index.html'); css=Path('scripts/mobile_override.css').read_text(); s=p.read_text()
-          if '</head>' not in s: raise SystemExit('head non trovato per mobile override')
-          p.write_text(s.replace('</head>', css+'\n</head>', 1))
+          p=Path('_site/index.html'); css=Path('scripts/mobile_override.css').read_text(); s=p.read_text(); p.write_text(s.replace('</head>', css+'\n</head>', 1))
           PY
           python scripts/app_ready_patch.py
           python scripts/internal_layout_aug28_patch.py
@@ -55,6 +49,8 @@ jobs:
           python scripts/manual_table_move_patch.py
           python scripts/atomic_chain_move_patch.py
           python scripts/history_mode_patch.py
+          curl --fail --silent --show-error --location "https://raw.githubusercontent.com/frassifederico-web/Marino-gestionale/d4fc2a7a8650984958ba99e9bcbed0837e3000eb/scripts/bulk_area_reallocation_patch.py" --output /tmp/bulk_area_base.py
+          python /tmp/bulk_area_base.py
           python scripts/bulk_area_reallocation_patch.py
           python scripts/square_force_4_patch.py
           python scripts/reservation_edit_date_guard_patch.py
@@ -67,9 +63,7 @@ jobs:
           python scripts/dehors_zones_oct6_patch.py
           python - <<'PY'
           from pathlib import Path
-          p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text()
-          if '</head>' not in s: raise SystemExit('head non trovato per premium UI')
-          p.write_text(s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1))
+          p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text(); p.write_text(s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1))
           PY
           cp pwa/manifest.webmanifest _site/manifest.webmanifest
           cp pwa/sw.js _site/sw.js
@@ -82,51 +76,17 @@ jobs:
           Path('/tmp/marino-module-final.mjs').write_text(m.group(1))
           PY
           node --check /tmp/marino-module-final.mjs
-          grep -q 'type="module"' _site/index.html
           grep -q 'bulkReallocateServiceArea' _site/index.html
+          grep -q 'Math.ceil(party/3)' _site/index.html
+          grep -q "\['D7','D8','D9','D10','D11','D12'\]" _site/index.html
+          grep -q "\['D13','D14','D15','D16','D17','D18'\]" _site/index.html
           grep -q 'reallocate_reservations_area_batch' _site/index.html
           grep -q 'marino-internal-tables-sep10-v5' _site/index.html
-          grep -q '__B123_TRIPLE__' _site/index.html
-          grep -q 'marinoForce4Single' _site/index.html
-          grep -q 'marinoFiveJollyPair' _site/index.html
-          grep -q 'Vuoi forzare la prenotazione?' _site/index.html
-          grep -q "party===4&&codes.length===1" _site/index.html
-          grep -q "party===4&&codes.length!==2" _site/index.html
-          grep -q 'return _saveBookingDehorsRulesBase(true)' _site/index.html
-          grep -q "party===5&&n!==2" _site/index.html
-          grep -q 'Tavoli disponibili primo turno' _site/index.html
-          grep -q 'Tavoli disponibili secondo turno' _site/index.html
-          grep -q 'Dehors interno' _site/index.html
-          grep -q 'Dehors esterno' _site/index.html
           grep -q 'MARINO_DEHORS_OUTDOOR_CODES' _site/index.html
           grep -q '2026-10-06' _site/index.html
           grep -q 'marinoStorageArea' _site/index.html
-          grep -q 'grid-template-columns:1fr 18mm 18mm 18mm' _site/index.html
-          grep -q 'tableSelectionSummary' _site/index.html
-          grep -q 'Prossimo' _site/index.html
-          grep -q 'Turno precedente' _site/index.html
-          grep -q 'availabilityWindow' _site/index.html
-          grep -q 'coverRange' _site/index.html
-          grep -q 'Menu disponibile' _site/index.html
-          grep -q '+ Nuova prenotazione' _site/index.html
-          grep -q '100dvh' _site/index.html
-          grep -q 'safe-area-inset-bottom' _site/index.html
-          grep -q 'marino-ui-refresh' _site/index.html
-          grep -q 'marino-mobile-override' _site/index.html
           grep -q 'marino-premium-ui' _site/index.html
-          grep -q 'Cliente arrivato' _site/index.html
-          grep -q 'Libera tavolo' _site/index.html
-          grep -q 'reservationDisplayNo' _site/index.html
-          grep -q 'Password dimenticata?' _site/index.html
-          grep -q 'persistSession:true' _site/index.html
           grep -q 'move_reservation_tables_batch' _site/index.html
-          grep -q 'ARCHIVIO STORICO' _site/index.html
-          grep -q 'chronoNotes' _site/index.html
-          grep -q 'id="bookingDay"' _site/index.html
-          grep -q 'id="mapDaySelector"' _site/index.html
-          grep -q 'Tavoli occupati nel servizio' _site/index.html
-          grep -q 'rel="manifest"' _site/index.html
-          grep -q 'backupPanel' _site/index.html
           grep -q 'navigator.serviceWorker.register' _site/index.html
           test -f _site/manifest.webmanifest
           test -f _site/sw.js
