@@ -77,9 +77,9 @@ jobs:
           PY
           node --check /tmp/marino-module-final.mjs
           grep -q 'bulkReallocateServiceArea' _site/index.html
-          grep -q 'Math.ceil(party/3)' _site/index.html
-          grep -q "\['D7','D8','D9','D10','D11','D12'\]" _site/index.html
-          grep -q "\['D13','D14','D15','D16','D17','D18'\]" _site/index.html
+          grep -q 'marinoOutdoorMinTables' _site/index.html
+          grep -q 'Math.ceil(Number(party||0)/3)' _site/index.html
+          grep -q 'marinoOutdoorCodesContiguous' _site/index.html
           grep -q 'reallocate_reservations_area_batch' _site/index.html
           grep -q 'marino-internal-tables-sep10-v5' _site/index.html
           grep -q 'MARINO_DEHORS_OUTDOOR_CODES' _site/index.html
