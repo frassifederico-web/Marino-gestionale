@@ -38,12 +38,13 @@ if n!=1: raise SystemExit('renderBookings turnover non sostituito')
 
 new_picker=r'''function renderPicker(){
   let room=$('room').value,start=tm($('arrival').value),endVal=$('endTime').value,party=Number($('party').value||0),TURN=15;
-  let stdOccEnd=effEnd($('arrival').value,endVal,105),forceOccEnd=effEnd($('arrival').value,endVal,90);
-  let stdBlockEnd=stdOccEnd==null?null:stdOccEnd+TURN,forceBlockEnd=forceOccEnd==null?null:forceOccEnd+TURN;
+  // Regola MARINO: rimpiazzo standard a +120 min; forzato a +105 min.
+  // Il margine e' gia' incluso nelle due finestre: non va sommato una seconda volta.
+  let stdBlockEnd=effEnd($('arrival').value,endVal,120),forceBlockEnd=effEnd($('arrival').value,endVal,105);
   let roomTables=allTables.filter(t=>t.area===room&&t.active).map(t=>{
     let rs=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).map(x=>reservations.find(r=>r.id===x.reservation_id)).filter(Boolean);
-    let stdConflict=rs.filter(r=>overlapsM(start,stdBlockEnd,tm(r.arrival_time),effEnd(r.arrival_time,r.expected_end_time,105)+TURN));
-    let forceConflict=rs.filter(r=>overlapsM(start,forceBlockEnd,tm(r.arrival_time),effEnd(r.arrival_time,r.expected_end_time,90)+TURN));
+    let stdConflict=rs.filter(r=>overlapsM(start,stdBlockEnd,tm(r.arrival_time),effEnd(r.arrival_time,r.expected_end_time,120)));
+    let forceConflict=rs.filter(r=>overlapsM(start,forceBlockEnd,tm(r.arrival_time),effEnd(r.arrival_time,r.expected_end_time,105)));
     let forceOnly=stdConflict.length>0&&forceConflict.length===0,busy=forceConflict.length>0,used=rs.length>0;
     let mn=Number(t.single_min_covers||1),mx=Number(t.single_max_covers||1),fit=party>=mn&&party<=mx,oversize=party>0&&party<mn;
     let score=(busy?1000:0)+(forceOnly?200:0)+(fit?0:oversize?80+(mn-party):40+Math.abs(party-mx));
