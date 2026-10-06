@@ -13,8 +13,7 @@ new_bookings=r'''function renderBookings(){
   function shared(a,b){let ac=tableCodesForRes(a.id),bc=tableCodesForRes(b.id);return ac.filter(x=>bc.includes(x))}
   function availableFrom(r,code){
     let start=mins(r.arrival_time);
-    let end=Math.max(mins(r.expected_end_time)||0,start+STD);
-    let freeFrom=end+TURN;
+    let freeFrom=start+120;
     let next=[...ordered].filter(x=>x.id!==r.id&&tableCodesForRes(x.id).includes(code)&&mins(x.arrival_time)>start).sort((a,b)=>mins(a.arrival_time)-mins(b.arrival_time))[0]||null;
     let limit=next?mins(next.arrival_time):serviceClose(r);
     if(freeFrom+STD+TURN>limit)return '';
@@ -40,11 +39,11 @@ new_picker=r'''function renderPicker(){
   let room=$('room').value,start=tm($('arrival').value),endVal=$('endTime').value,party=Number($('party').value||0),TURN=15;
   // Regola MARINO: rimpiazzo standard a +120 min; forzato a +105 min.
   // Il margine e' gia' incluso nelle due finestre: non va sommato una seconda volta.
-  let stdBlockEnd=effEnd($('arrival').value,endVal,120),forceBlockEnd=effEnd($('arrival').value,endVal,105);
+  let stdBlockEnd=start==null?null:start+120,forceBlockEnd=start==null?null:start+105;
   let roomTables=allTables.filter(t=>t.area===room&&t.active).map(t=>{
     let rs=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).map(x=>reservations.find(r=>r.id===x.reservation_id)).filter(Boolean);
-    let stdConflict=rs.filter(r=>overlapsM(start,stdBlockEnd,tm(r.arrival_time),effEnd(r.arrival_time,r.expected_end_time,120)));
-    let forceConflict=rs.filter(r=>overlapsM(start,forceBlockEnd,tm(r.arrival_time),effEnd(r.arrival_time,r.expected_end_time,105)));
+    let stdConflict=rs.filter(r=>overlapsM(start,stdBlockEnd,tm(r.arrival_time),tm(r.arrival_time)+120));
+    let forceConflict=rs.filter(r=>overlapsM(start,forceBlockEnd,tm(r.arrival_time),tm(r.arrival_time)+105));
     let forceOnly=stdConflict.length>0&&forceConflict.length===0,busy=forceConflict.length>0,used=rs.length>0;
     let mn=Number(t.single_min_covers||1),mx=Number(t.single_max_covers||1),fit=party>=mn&&party<=mx,oversize=party>0&&party<mn;
     let score=(busy?1000:0)+(forceOnly?200:0)+(fit?0:oversize?80+(mn-party):40+Math.abs(party-mx));
