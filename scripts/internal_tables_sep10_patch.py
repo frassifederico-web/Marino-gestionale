@@ -17,6 +17,7 @@ function marinoInternalComboValid(codes){
   if(codes.length<=1)return true;
   const a=[...codes];
   if(marinoFiveJollyPair(a))return true;
+  if(a.length===2&&a.includes('B4')&&a.includes('B5'))return true;
   if(a.length===2&&a.every(c=>marinoB123(c)))return true;
   const blocks=[['P1','P2','P3','P4','P5','P6','PQ1','PQ2'],['PQ1','PQ2','PQ3','PQ4','PQ5']];
   return blocks.some(block=>{
@@ -48,6 +49,7 @@ new_selection=r'''function selectionRange(){
   if(ts[0]?.area==='dehors')return n===1?{mn:1,mx:4}:n===2?{mn:4,mx:8}:{mn:2*n+1,mx:2*n+2};
   if(n===1){const x=marinoSingleRange(codes[0]);return {mn:x.mn,mx:x.mx};}
   if(marinoFiveJollyPair(codes))return {mn:4,mx:4};
+  if(n===2&&codes.includes('B4')&&codes.includes('B5'))return {mn:2,mx:4};
   if(n===2&&codes.every(c=>marinoB123(c)))return {mn:4,mx:4};
   if(!marinoInternalComboValid(codes))return {mn:1,mx:0};
   return {mn:4,mx:3*n};
@@ -68,6 +70,7 @@ new_bulk_range=r'''function bulkAreaRange(area,codes){
   if(area==='dehors')return n===1?[1,4,4]:n===2?[4,8,8]:[2*n+1,2*n+2,2*n+2];
   if(n===1){const x=marinoSingleRange(codes[0]);return [x.mn,x.mx,x.hard]}
   if(marinoFiveJollyPair(codes))return [4,4,4];
+  if(n===2&&codes.includes('B4')&&codes.includes('B5'))return [2,4,4];
   if(n===2&&codes.every(c=>marinoB123(c)))return [4,4,4];
   if(!marinoInternalComboValid(codes))return [1,0,0];
   return [4,3*n,3*n]
@@ -81,7 +84,7 @@ new_candidates=r'''function bulkAreaInternalCandidates(r){
   const byCode=c=>tables.find(t=>t.code===c);
   const add=codes=>{codes=codes.filter(c=>byCode(c));if(!codes.length)return;if(party<=3&&codes.length>1)return;if(codes.length>1&&!marinoInternalComboValid(codes))return;const key=codes.join('|');if(seen.has(key))return;const [mn,mx,hard]=bulkAreaRange('interno',codes);if(party<mn||party>(r.forced?hard:mx))return;seen.add(key);out.push({codes,mn,mx,hard,waste:(r.forced?hard:mx)-party})};
   tables.forEach(t=>add([t.code]));
-  [['B1','B2'],['B1','B3'],['B2','B3'],['B5','B6']].forEach(add);
+  [['B1','B2'],['B1','B3'],['B2','B3'],['B4','B5'],['B5','B6']].forEach(add);
   const blocks=[['P1','P2','P3','P4','P5','P6','PQ1','PQ2'],['PQ1','PQ2','PQ3','PQ4','PQ5']];
   blocks.forEach(block=>{const a=block.filter(c=>byCode(c));for(let n=2;n<=a.length;n++)for(let i=0;i<=a.length-n;i++)add(a.slice(i,i+n))});
   out.sort((a,b)=>a.codes.length-b.codes.length||a.waste-b.waste||a.codes.join('').localeCompare(b.codes.join('')));return out;
