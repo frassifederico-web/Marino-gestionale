@@ -30,7 +30,16 @@ function marinoPickerSection(title,subtitle,items,kind){
   const wrap=document.createElement('div');wrap.className='marino-picker-section '+kind;
   const h=document.createElement('div');h.className='marino-picker-section-head';h.innerHTML='<b>'+title+'</b><span>'+subtitle+'</span>';wrap.appendChild(h);
   const grid=document.createElement('div');grid.className='tables';
-  grid.innerHTML=items.map(t=>{const count=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).length;let cl=count?'busy':'free';if(selected.includes(t.code))cl+=' selected';return '<button type="button" class="table '+cl+'" data-marino-code="'+esc(t.code)+'"><b>'+esc(t.label)+'</b><div class="muted">'+(count?'Già usato nella serata':'Libero')+'</div></button>'}).join('');
+  const start=tm($('arrival')?.value),end=start==null?null:start+120;
+  grid.innerHTML=items.map(t=>{
+    const bookings=links.filter(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==editing).map(x=>reservations.find(r=>r.id===x.reservation_id)).filter(r=>r&&r.status==='confermata');
+    const std=bookings.some(r=>overlapsM(start,end,tm(r.arrival_time),tm(r.arrival_time)+120));
+    const forced=bookings.some(r=>overlapsM(start,start==null?null:start+105,tm(r.arrival_time),tm(r.arrival_time)+105));
+    let cl=forced?'busy':std?'forceTurn':bookings.length?'rebook':'free';
+    if(selected.includes(t.code))cl+=' selected';
+    const status=forced?'Occupato':std?'Forzabile':bookings.length?'Rimpiazzabile':'Libero';
+    return '<button type="button" class="table '+cl+'" '+(forced?'disabled aria-disabled="true"':'data-marino-code="'+esc(t.code)+'"')+'><b>'+esc(t.label)+'</b><div class="muted">'+status+'</div></button>';
+  }).join('');
   grid.querySelectorAll('[data-marino-code]').forEach(btn=>btn.addEventListener('click',()=>{
     const code=btn.dataset.marinoCode,clicked=allTables.find(t=>String(t.code)===String(code)),clickedGroup=marinoTableGroup(clicked);
     const selectedGroups=selected.map(sc=>marinoTableGroup(allTables.find(t=>String(t.code)===String(sc)))).filter(Boolean);
