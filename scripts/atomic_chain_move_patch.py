@@ -37,10 +37,12 @@ function atomicPlannedIds(){return new Set(atomicChainPlan.map(x=>x.reservation_
 function atomicConflict(code,resId){
   const src=atomicReservation(resId);if(!src)return null;
   const planned=atomicPlannedIds();
-  const a0=tm(src.arrival_time),a1=effEnd(src.arrival_time,src.expected_end_time,90);
+  const a0=tm(src.arrival_time);
+  const blockEnd=r=>Math.max(effEnd(r.arrival_time,r.expected_end_time,90),tm(r.arrival_time)+(r.forced?90:105))+15;
+  const a1=blockEnd(src);
   return links.filter(x=>x.restaurant_tables?.code===code&&x.reservation_id!==resId)
     .map(x=>atomicReservation(x.reservation_id)).filter(Boolean)
-    .find(r=>r.status==='confermata'&&!planned.has(r.id)&&overlapsM(a0,a1,tm(r.arrival_time),effEnd(r.arrival_time,r.expected_end_time,90)))||null;
+    .find(r=>r.status==='confermata'&&!planned.has(r.id)&&overlapsM(a0,a1,tm(r.arrival_time),blockEnd(r)))||null;
 }
 function atomicDestinationOptions(r){
   const current=new Set(tableCodesForRes(r.id));
