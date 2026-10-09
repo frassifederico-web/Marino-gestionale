@@ -21,6 +21,8 @@ function atomicChainModal(){
   m.className='atomicChainOverlay';
   m.innerHTML='<div class="atomicChainCard"><div class="atomicChainHead"><b>Riorganizza tavoli</b><button type="button" class="secondary" data-chain-close>×</button></div><div id="atomicChainBody"></div></div>';
   document.body.appendChild(m);
+  m.querySelector('.atomicChainHead').insertAdjacentHTML('beforeend','<button type="button" class="secondary" data-parking-open>Riorganizza sala</button>');
+  m.querySelector('[data-parking-open]').addEventListener('click',startParkingPlanner);
   m.querySelector('[data-chain-close]').addEventListener('click',closeAtomicChainMove);
   m.addEventListener('click',e=>{if(e.target===m)closeAtomicChainMove()});
   return m;
@@ -103,6 +105,75 @@ async function confirmAtomicChainMove(force){
   showPage('map',document.querySelector('[data-p="map"]'));
   alert('Spostamenti completati. Tutte le prenotazioni sono rimaste disponibili e sono stati modificati soltanto i tavoli.');
 }
+
+let parkingDraft=new Map(),parkingBaseline=new Map(),parkingScope=null,parkingFocus=null,parkingBusy=false;
+function parkingCodes(id){return [...tableCodesForRes(id)].sort()}
+function parkingStart(id){const r=atomicReservation(id);return r?tm(r.arrival_time):null}
+function parkingEnd(id){const r=atomicReservation(id);if(!r)return null;return Math.max(effEnd(r.arrival_time,r.expected_end_time,90),tm(r.arrival_time)+(r.forced?90:105))+15}
+function parkingConflict(id,codes){
+  const a=parkingStart(id),b=parkingEnd(id);
+  return [...parkingDraft].some(([other,assigned])=>other!==id&&assigned.length&&assigned.some(c=>codes.includes(c))&&overlapsM(a,b,parkingStart(other),parkingEnd(other)));
+}
+function startParkingPlanner(){
+  const r=atomicReservation(atomicChainStartId)||reservations.find(x=>x.status==='confermata');
+  if(!r)return alert('Nessuna prenotazione confermata disponibile.');
+  atomicChainPlan=[];parkingDraft=new Map();parkingBaseline=new Map();parkingBusy=false;
+  parkingScope={date:r.service_date,service:r.service_code,area:r.area};
+  parkingFocus=r.id;atomicChainModal().classList.add('open');renderParkingPlanner();
+}
+function parkingScopeRows(){return reservations.filter(r=>r.status==='confermata'&&r.service_date===parkingScope.date&&r.service_code===parkingScope.service&&r.area===parkingScope.area)}
+function parkingAdd(id){
+  const r=atomicReservation(id);if(!r||!parkingScopeRows().some(x=>x.id===id))return;
+  if(!parkingDraft.has(id)){parkingDraft.set(id,[]);parkingBaseline.set(id,parkingCodes(id))}
+  parkingFocus=id;renderParkingPlanner();
+}
+function parkingSet(id,codes){
+  if(!parkingDraft.has(id))return;
+  const allowed=allTables.filter(t=>t.active!==false&&t.area===parkingScope.area).map(t=>t.code);
+  if(codes.some(c=>!allowed.includes(c)))return alert('Tavolo non disponibile in questa area.');
+  if(parkingConflict(id,codes))return alert('Due prenotazioni parcheggiate si sovrappongono sullo stesso tavolo.');
+  parkingDraft.set(id,codes);renderParkingPlanner();
+}
+function parkingCancel(){parkingDraft.clear();parkingBaseline.clear();parkingFocus=null;parkingScope=null;closeAtomicChainMove()}
+function renderParkingPlanner(){
+  const body=document.getElementById('atomicChainBody');if(!body||!parkingScope)return;
+  const rows=parkingScopeRows(),options=rows.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.guest_name)+' · '+r.party_size+' coperti · '+hhmm(r.arrival_time)+'</option>').join('');
+  const parked=[...parkingDraft].map(([id,codes])=>{const r=atomicReservation(id);return '<div class="atomicChainRow"><span>'+esc(r?.guest_name||id)+' · '+(r?.party_size||'')+' coperti · da '+esc(parkingBaseline.get(id).join(', '))+'</span><b>'+(codes.length?esc(codes.join(', ')):'IN PARCHEGGIO')+'</b><button type="button" class="secondary" data-park-focus="'+esc(id)+'">Assegna</button><button type="button" class="secondary" data-park-remove="'+esc(id)+'">Ripristina</button></div>'}).join('');
+  const focus=parkingDraft.has(parkingFocus)?atomicReservation(parkingFocus):null;
+  const eligible=allTables.filter(t=>t.active!==false&&t.area===parkingScope.area);
+  const checks=focus?eligible.map(t=>{const checked=parkingDraft.get(focus.id).includes(t.code);const a=parkingStart(focus.id),b=parkingEnd(focus.id);
+    const used=links.some(x=>x.restaurant_tables?.code===t.code&&x.reservation_id!==focus.id&&!parkingDraft.has(x.reservation_id)&&(()=>{const r=atomicReservation(x.reservation_id);return r&&r.status==='confermata'&&overlapsM(a,b,tm(r.arrival_time),Math.max(effEnd(r.arrival_time,r.expected_end_time,90),tm(r.arrival_time)+(r.forced?90:105))+15)})());
+    return '<label style="display:inline-flex;align-items:center;gap:5px;padding:7px;border:1px solid #ccd;border-radius:8px;margin:3px"><input type="checkbox" data-park-table="'+esc(t.code)+'" '+(checked?'checked ':'')+(used?'disabled ':'')+'/>'+esc(t.label||t.code)+(used?' · occupato':'')+'</label>'}).join(''):'';
+  const unresolved=[...parkingDraft].filter(([id,codes])=>!codes.length);
+  body.innerHTML='<div class="atomicChainHint"><b>Riorganizza sala · '+esc(parkingScope.date)+'</b><br>Parcheggia più prenotazioni e assegna tutti i tavoli. Nessuna modifica viene salvata fino alla conferma.</div><select id="parkingAddSelect">'+options+'</select><div class="atomicChainActions"><button type="button" data-park-add>Parcheggia prenotazione</button><button type="button" class="secondary" data-park-cancel>Annulla tutto</button></div><div class="atomicChainSummary" style="margin-top:12px">'+(parked||'<div style="padding:12px">Nessuna prenotazione parcheggiata</div>')+'</div>'+(focus?'<h4>Assegna '+esc(focus.guest_name)+' ('+focus.party_size+' coperti)</h4><div>'+checks+'</div><div class="atomicChainActions"><button type="button" data-park-apply>Applica tavoli selezionati</button></div>':'')+'<div class="atomicChainActions"><button type="button" '+(!parkingDraft.size||unresolved.length||parkingBusy?'disabled':'')+' data-park-confirm>Conferma tutti gli spostamenti</button></div>'+(unresolved.length?'<div class="muted">Da assegnare: '+unresolved.length+' prenotazioni</div>':'');
+  body.querySelector('[data-park-add]').onclick=()=>parkingAdd(body.querySelector('#parkingAddSelect').value);
+  body.querySelector('[data-park-cancel]').onclick=parkingCancel;
+  body.querySelectorAll('[data-park-focus]').forEach(b=>b.onclick=()=>{parkingFocus=b.dataset.parkFocus;renderParkingPlanner()});
+  body.querySelectorAll('[data-park-remove]').forEach(b=>b.onclick=()=>{parkingDraft.delete(b.dataset.parkRemove);parkingBaseline.delete(b.dataset.parkRemove);parkingFocus=[...parkingDraft.keys()][0]||null;renderParkingPlanner()});
+  if(focus)body.querySelector('[data-park-apply]').onclick=()=>parkingSet(focus.id,[...body.querySelectorAll('[data-park-table]:checked')].map(x=>x.dataset.parkTable));
+  const btn=body.querySelector('[data-park-confirm]');if(btn)btn.onclick=()=>parkingCommit(false);
+}
+async function parkingCommit(force){
+  if(parkingBusy||!parkingDraft.size||[...parkingDraft.values()].some(x=>!x.length))return;
+  parkingBusy=true;
+  try{
+    const fresh=await db.from('reservation_tables').select('reservation_id,restaurant_tables(code)').in('reservation_id',[...parkingDraft.keys()]);
+    if(fresh.error)throw fresh.error;
+    for(const [id,baseline] of parkingBaseline){
+      const now=fresh.data.filter(x=>x.reservation_id===id).map(x=>x.restaurant_tables?.code).filter(Boolean).sort();
+      if(JSON.stringify(now)!==JSON.stringify(baseline))throw Error('I tavoli di una prenotazione sono cambiati su un altro dispositivo. Annulla e riparti dalla situazione aggiornata.');
+    }
+    const moves=[...parkingDraft].map(([reservation_id,table_codes])=>({reservation_id,table_codes}));
+    const result=await db.rpc('move_reservation_tables_batch',{p_moves:moves,p_forced:force});
+    if(result.error){
+      if(!force&&/forzatura|capienza|massima|consecutiv/i.test(result.error.message||'')&&confirm(result.error.message+'\\nVuoi forzare gli spostamenti?')){parkingBusy=false;return parkingCommit(true)}
+      throw result.error;
+    }
+    parkingCancel();await loadAll();showPage('map',document.querySelector('[data-p="map"]'));alert('Riorganizzazione salvata: '+moves.length+' prenotazioni riassegnate.');
+  }catch(e){alert('Nessuna modifica confermata. '+(e.message||e));}
+  finally{parkingBusy=false;if(parkingScope)renderParkingPlanner()}
+}
+
 '''
 marker='function renderMap(){'
 if marker not in s:
