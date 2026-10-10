@@ -10,10 +10,10 @@ s = s.replace(
 )
 
 helper = r'''
-const MARINO_DEHORS_OUTDOOR_CODES=new Set(['D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18']);
+const MARINO_DEHORS_OUTDOOR_CODES=new Set(['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12']);
 const MARINO_DEHORS_ZONE_START='2026-10-06';
 function marinoBookingZoneDate(){return $('bookingDay')?.value||$('date')?.value||''}
-function marinoDehorsZonesEnabled(){return marinoBookingZoneDate()>=MARINO_DEHORS_ZONE_START}
+function marinoDehorsZonesEnabled(){return true}
 function marinoStorageArea(room){return room==='dehors_esterno'?'dehors':room}
 function marinoIsOutdoorDehorsTable(t){return !!t&&t.area==='dehors'&&MARINO_DEHORS_OUTDOOR_CODES.has(String(t.code||''))}
 function marinoTableGroup(t){if(t.area==='interno')return 'interno';if(marinoIsOutdoorDehorsTable(t))return 'dehors_esterno';return null}
@@ -52,7 +52,7 @@ function marinoRenderAllBookingTables(){
   allTables.filter(t=>t.active).forEach(t=>{const g=marinoTableGroup(t);if(g&&groups[g])groups[g].push(t)});
   const layout=document.createElement('div');layout.className='marino-picker-two-zones';
   layout.appendChild(marinoPickerSection('INTERNO','Tavoli interni',groups.interno,'marino-picker-interno'));
-  if(marinoDehorsZonesEnabled())layout.appendChild(marinoPickerSection('DEHORS ESTERNO','Tavoli 61–66 · 71–76',groups.dehors_esterno,'marino-picker-dehors-esterno'));
+  if(marinoDehorsZonesEnabled())layout.appendChild(marinoPickerSection('DEHORS ESTERNO','Tavoli 51–56 · 61–66',groups.dehors_esterno,'marino-picker-dehors-esterno'));
   picker.appendChild(layout);
 }
 const _renderPickerDehorsZonesBase=renderPicker;
@@ -77,6 +77,6 @@ css=r'''<style id="marino-booking-zones-ui">
 .marino-picker-two-zones{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:12px;align-items:start}.marino-picker-section{margin-top:12px;padding:10px;border-radius:14px;border:1px solid #c8d7df;background:#f7fbf5}.marino-picker-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}.marino-picker-interno .table.free{background:var(--greenbg);border-color:#8ab86d;color:var(--green)}.marino-picker-dehors-esterno{background:#e5eef7;border-color:#7198bd}.marino-picker-dehors-esterno .table.free{background:#b9d9f5!important;border-color:#397bb8!important;color:#063f78!important}.marino-picker-dehors-esterno .table.busy{background:#f1d4cf;border-color:#b86d61;color:#7d241b}@media(max-width:720px){.marino-picker-two-zones{grid-template-columns:1fr}}
 </style>'''
 if 'marino-booking-zones-ui' not in s:s=s.replace('</head>',css+'</head>',1)
-for item in ['marinoOutdoorMinTables','marinoOutdoorCodesContiguous','DEHORS ESTERNO','Tavoli 61–66 · 71–76']:
+for item in ['marinoOutdoorMinTables','marinoOutdoorCodesContiguous','DEHORS ESTERNO','Tavoli 51–56 · 61–66']:
     if item not in s:raise SystemExit('Verifica mancante: '+item)
 p.write_text(s)
