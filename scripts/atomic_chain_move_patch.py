@@ -63,21 +63,26 @@ function startAtomicChainMove(id){
 function renderAtomicChainStep(){
   const body=document.getElementById('atomicChainBody');if(!body)return;
   const r=atomicReservation(atomicChainCurrentId);if(!r)return closeAtomicChainMove();
-  const opts=atomicDestinationOptions(r);
+  const current=new Set(tableCodesForRes(r.id));
+  const tables=allTables.filter(t=>t.active!==false&&t.area===r.area&&!current.has(t.code));
   const intro=atomicChainPlan.length
     ? '<div class="atomicChainHint"><b>'+esc(atomicCurrentLabels(r.id))+' è occupato da '+esc(r.guest_name)+'.</b><br>Dove vuoi spostare questa prenotazione?</div>'
-    : '<div class="atomicChainHint"><b>Sposta '+esc(r.guest_name)+'</b><br>Attuale: '+esc(atomicCurrentLabels(r.id))+'. Scegli il tavolo di destinazione, anche se è già occupato.</div>';
-  body.innerHTML=intro+'<label class="atomicChainLabel">Tavolo di destinazione</label><select id="atomicChainTarget">'+opts+'</select><div class="atomicChainActions"><button type="button" class="secondary" data-chain-cancel>Annulla</button><button type="button" data-chain-next>Continua</button></div>';
+    : '<div class="atomicChainHint"><b>Sposta '+esc(r.guest_name)+'</b><br>Attuale: '+esc(atomicCurrentLabels(r.id))+'. Seleziona uno o più tavoli di destinazione.</div>';
+  const choices=tables.map(t=>{const c=atomicConflict(t.code,r.id);return '<label style="display:inline-flex;align-items:center;gap:6px;margin:4px;padding:9px;border:1px solid #9daab1;border-radius:9px"><input type="checkbox" data-chain-table="'+esc(t.code)+'"> <b>'+esc(t.label||t.code)+'</b>'+(c?' <small>occupato</small>':'')+'</label>'}).join('');
+  body.innerHTML=intro+'<div class="atomicChainLabel">Tavoli di destinazione (selezione multipla)</div><div class="atomicChainTargets">'+choices+'</div><div class="atomicChainActions"><button type="button" class="secondary" data-chain-cancel>Annulla</button><button type="button" data-chain-next>Continua</button></div>';
   body.querySelector('[data-chain-cancel]').addEventListener('click',closeAtomicChainMove);
   body.querySelector('[data-chain-next]').addEventListener('click',advanceAtomicChainMove);
 }
 function advanceAtomicChainMove(){
   const r=atomicReservation(atomicChainCurrentId);if(!r)return;
-  const sel=document.getElementById('atomicChainTarget');const code=sel?.value;if(!code)return alert('Scegli un tavolo di destinazione.');
+  const codes=[...document.querySelectorAll('#atomicChainBody [data-chain-table]:checked')].map(x=>x.dataset.chainTable);
+  if(!codes.length)return alert('Scegli almeno un tavolo di destinazione.');
   if(atomicChainPlan.some(x=>x.reservation_id===r.id))return alert('Questa prenotazione è già presente nella catena.');
-  atomicChainPlan.push({reservation_id:r.id,table_codes:[code],from_label:atomicCurrentLabels(r.id),to_label:atomicTableLabel(code),guest_name:r.guest_name});
-  const conflict=atomicConflict(code,r.id);
-  if(conflict){atomicChainCurrentId=conflict.id;renderAtomicChainStep();return}
+  const conflicts=new Map();
+  for(const code of codes){const c=atomicConflict(code,r.id);if(c)conflicts.set(c.id,c)}
+  if(conflicts.size>1)return alert('Hai selezionato tavoli occupati da più prenotazioni. Usa Riorganizza sala per parcheggiarle e spostarle insieme.');
+  atomicChainPlan.push({reservation_id:r.id,table_codes:codes,from_label:atomicCurrentLabels(r.id),to_label:codes.map(atomicTableLabel).join(' + '),guest_name:r.guest_name});
+  if(conflicts.size){atomicChainCurrentId=[...conflicts.values()][0].id;renderAtomicChainStep();return}
   renderAtomicChainSummary();
 }
 function renderAtomicChainSummary(){
