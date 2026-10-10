@@ -31,6 +31,7 @@ function closeAtomicChainMove(){
   const m=document.getElementById('atomicChainMoveModal');
   if(m)m.classList.remove('open');
   atomicChainPlan=[];atomicChainCurrentId=null;atomicChainStartId=null;
+  if(typeof parkingDraft!=='undefined'){parkingDraft.clear();parkingBaseline.clear();parkingScope=null;parkingFocus=null;}
 }
 function atomicReservation(id){return reservations.find(r=>r.id===id)||null}
 function atomicCurrentLabels(id){return tableLabelsForRes(id)||'Tavolo da assegnare'}
@@ -156,6 +157,7 @@ function renderParkingPlanner(){
 }
 async function parkingCommit(force){
   if(parkingBusy||!parkingDraft.size||[...parkingDraft.values()].some(x=>!x.length))return;
+  if(!confirm('Confermi la riassegnazione di '+parkingDraft.size+' prenotazioni? Il salvataggio sarà unico.'))return;
   for(const [id,codes] of parkingDraft){if(parkingConflict(id,codes))return alert('Tavoli sovrapposti: correggi la disposizione prima di confermare.')}
   parkingBusy=true;
   try{
