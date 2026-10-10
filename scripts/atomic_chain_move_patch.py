@@ -154,7 +154,8 @@ function renderParkingPlanner(){
   const btn=body.querySelector('[data-park-confirm]');if(btn)btn.onclick=()=>parkingCommit(false);
 }
 async function parkingCommit(force){
-  if(parkingBusy||!parkingDraft.size||[...parkingDraft.values()].some(x=>!x.length))return;\n  for(const [id,codes] of parkingDraft){if(parkingConflict(id,codes))return alert('Tavoli sovrapposti: correggi la disposizione prima di confermare.')}
+  if(parkingBusy||!parkingDraft.size||[...parkingDraft.values()].some(x=>!x.length))return;
+  for(const [id,codes] of parkingDraft){if(parkingConflict(id,codes))return alert('Tavoli sovrapposti: correggi la disposizione prima di confermare.')}
   parkingBusy=true;
   try{
     const fresh=await db.from('reservation_tables').select('reservation_id,restaurant_tables(code)').in('reservation_id',[...parkingDraft.keys()]);
