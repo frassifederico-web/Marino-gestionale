@@ -87,6 +87,9 @@ jobs:
           grep -q 'marinoStorageArea' _site/index.html
           grep -q 'marino-premium-ui' _site/index.html
           grep -q 'move_reservation_tables_batch' _site/index.html
+          grep -q 'startParkingPlanner' _site/index.html
+          grep -q 'data-parking-open' _site/index.html
+          grep -q 'Tavoli 51–56 · 61–66' _site/index.html
           grep -q 'navigator.serviceWorker.register' _site/index.html
           test -f _site/manifest.webmanifest
           test -f _site/sw.js
