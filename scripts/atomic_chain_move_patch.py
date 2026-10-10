@@ -137,7 +137,7 @@ function parkingSet(id,codes){
 function parkingCancel(){parkingDraft.clear();parkingBaseline.clear();parkingFocus=null;parkingScope=null;closeAtomicChainMove()}
 function renderParkingPlanner(){
   const body=document.getElementById('atomicChainBody');if(!body||!parkingScope)return;
-  const rows=parkingScopeRows(),options=rows.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.guest_name)+' · '+r.party_size+' coperti · '+hhmm(r.arrival_time)+'</option>').join('');
+  const rows=parkingScopeRows(),options=rows.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.guest_name)+' · '+r.party_size+' coperti · '+esc(String(r.arrival_time||'').slice(0,5))+'</option>').join('');
   const parked=[...parkingDraft].map(([id,codes])=>{const r=atomicReservation(id);return '<div class="atomicChainRow"><span>'+esc(r?.guest_name||id)+' · '+(r?.party_size||'')+' coperti · da '+esc(parkingBaseline.get(id).join(', '))+'</span><b>'+(codes.length?esc(codes.join(', ')):'IN PARCHEGGIO')+'</b><button type="button" class="secondary" data-park-focus="'+esc(id)+'">Assegna</button><button type="button" class="secondary" data-park-remove="'+esc(id)+'">Ripristina</button></div>'}).join('');
   const focus=parkingDraft.has(parkingFocus)?atomicReservation(parkingFocus):null;
   const eligible=allTables.filter(t=>t.active!==false&&t.area===parkingScope.area);
@@ -154,7 +154,7 @@ function renderParkingPlanner(){
   const btn=body.querySelector('[data-park-confirm]');if(btn)btn.onclick=()=>parkingCommit(false);
 }
 async function parkingCommit(force){
-  if(parkingBusy||!parkingDraft.size||[...parkingDraft.values()].some(x=>!x.length))return;
+  if(parkingBusy||!parkingDraft.size||[...parkingDraft.values()].some(x=>!x.length))return;\n  for(const [id,codes] of parkingDraft){if(parkingConflict(id,codes))return alert('Tavoli sovrapposti: correggi la disposizione prima di confermare.')}
   parkingBusy=true;
   try{
     const fresh=await db.from('reservation_tables').select('reservation_id,restaurant_tables(code)').in('reservation_id',[...parkingDraft.keys()]);
