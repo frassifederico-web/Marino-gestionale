@@ -130,6 +130,7 @@ function parkingAdd(id){
 function parkingSet(id,codes){
   if(!parkingDraft.has(id))return;
   const allowed=allTables.filter(t=>t.active!==false&&t.area===parkingScope.area).map(t=>t.code);
+  if(new Set(codes).size!==codes.length)return alert('Lo stesso tavolo non può essere assegnato due volte.');
   if(codes.some(c=>!allowed.includes(c)))return alert('Tavolo non disponibile in questa area.');
   if(parkingConflict(id,codes))return alert('Due prenotazioni parcheggiate si sovrappongono sullo stesso tavolo.');
   parkingDraft.set(id,codes);renderParkingPlanner();
@@ -158,6 +159,9 @@ async function parkingCommit(force){
   for(const [id,codes] of parkingDraft){if(parkingConflict(id,codes))return alert('Tavoli sovrapposti: correggi la disposizione prima di confermare.')}
   parkingBusy=true;
   try{
+    const current=await db.from('reservations').select('id,status,service_date,service_code,area,arrival_time,expected_end_time,party_size').in('id',[...parkingDraft.keys()]);
+    if(current.error)throw current.error;
+    if(current.data.length!==parkingDraft.size||current.data.some(r=>r.status!=='confermata'||r.service_date!==parkingScope.date||r.service_code!==parkingScope.service||r.area!==parkingScope.area))throw Error('Una prenotazione è cambiata durante la riorganizzazione. Ricarica prima di procedere.');
     const fresh=await db.from('reservation_tables').select('reservation_id,restaurant_tables(code)').in('reservation_id',[...parkingDraft.keys()]);
     if(fresh.error)throw fresh.error;
     for(const [id,baseline] of parkingBaseline){
