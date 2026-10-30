@@ -4,7 +4,7 @@ import re
 p=Path('_site/index.html')
 s=p.read_text()
 
-patch=r'''
+if 'function marinoPwaPrintEsc(' in s or 'function marinoPrintEsc(' in s:\n    print('Stampa prenotazioni gia presente nel gestionale: non duplicare')\n    raise SystemExit(0)\n\npatch=r'''
 function marinoPwaPrintEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function ensurePwaReservationsPrintButton(){
   const host=$('bookingList');if(!host||document.getElementById('downloadReservationsPdfBtn'))return;
