@@ -40,7 +40,7 @@ const _renderBookingsPwaPrintBase=renderBookings;
 renderBookings=async function(){const out=await _renderBookingsPwaPrintBase();ensurePwaReservationsPrintButton();return out};
 '''
 
-marker='function _renderMapBase'
+if 'function marinoPwaPrintEsc(' in s:\n    raise SystemExit('Script stampa gia presente: evita duplicazione')\n\nmarker='function _renderMapBase'
 if marker not in s:
     raise SystemExit('_renderMapBase non trovata per stampa prenotazioni')
 s=s.replace(marker,patch+'\n'+marker,1)
