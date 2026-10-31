@@ -66,7 +66,7 @@ jobs:
           from pathlib import Path
           p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text(); p.write_text(s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1))
           PY
-          curl --fail --silent --show-error --location 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js' --output _site/jspdf.umd.min.js
+          curl --fail --silent --show-error --location 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' --output _site/jspdf.umd.min.js
           test -s _site/jspdf.umd.min.js
           cp pwa/manifest.webmanifest _site/manifest.webmanifest
           cp pwa/sw.js _site/sw.js
