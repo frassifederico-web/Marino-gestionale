@@ -14,6 +14,7 @@ new_fn=r'''function enhanceMapBookings(){
         .filter(x=>x.restaurant_tables?.code===t.code)
         .map(x=>reservations.find(r=>r.id===x.reservation_id))
         .filter(r=>r&&r.status==='confermata')
+        .filter((r,i,arr)=>arr.findIndex(other=>String(other.id)===String(r.id))===i)
         .sort((a,b)=>String(a.arrival_time).localeCompare(String(b.arrival_time))||String(a.created_at||'').localeCompare(String(b.created_at||'')));
       const card=cards.find(el=>{
         const b=el.querySelector('b');
