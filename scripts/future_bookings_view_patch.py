@@ -6,7 +6,7 @@ if anchor not in s: raise SystemExit('Booking list anchor missing')
 s=s.replace(anchor,anchor+'<div id="marinoAllBookings" aria-live="polite"><div id="marinoAllBookingsStatus" class="muted">Caricamento prenotazioni…</div><div id="marinoAllBookingsRows"></div></div>',1)
 js=r"""
 // Single compact chronological list, today and all future dates. Read-only query.
-let marinoAllBookingsLoading=false,marinoAllBookingsPending=false;
+let marinoAllBookingsLoading=false,marinoAllBookingsPending=false,marinoAllBookingsRefreshTimer=null;
 const marinoBookingsWithTimeout=(work,ms=16000)=>Promise.race([
   work,
   new Promise((_,reject)=>setTimeout(()=>reject(new Error('Tempo scaduto nel caricamento prenotazioni')),ms))
@@ -34,6 +34,7 @@ async function marinoLoadAllBookings(){
       if(offset===19500)throw Error('Elenco troppo lungo: limite di sicurezza raggiunto');
     }
     const names=new Map();
+    const marinoTableById=new Map(allTables.map(t=>[String(t.id),t]));
     for(let i=0;i<bookings.length;i+=100){
       let q;
       try {
@@ -44,7 +45,7 @@ async function marinoLoadAllBookings(){
         break;
       }
       for(const link of q.data||[]){
-        const t=allTables.find(t=>String(t.id)===String(link.table_id));
+        const t=marinoTableById.get(String(link.table_id));
         if(t){
           const k=String(link.reservation_id);
           names.set(k,[...(names.get(k)||[]),t.label||t.code]);
@@ -79,7 +80,6 @@ async function marinoLoadAllBookings(){
       fragment.append(row);
     }
     target.replaceChildren(fragment);
-    document.getElementById('bookingList')?.style.removeProperty('display');
     status.textContent=bookings.length+' prenotazioni da oggi in avanti · tocca una riga per modificarla';
     if(!bookings.length)target.textContent='Nessuna prenotazione da oggi in avanti.';
   }catch(e){
@@ -113,7 +113,10 @@ showPage=function(id,...args){
 const marinoAllBookingsRenderBase=renderBookings;
 renderBookings=function(...args){
   const out=marinoAllBookingsRenderBase.apply(this,args);
-  if(document.getElementById('bookings')?.classList.contains('on'))void marinoLoadAllBookings();
+  if(document.getElementById('bookings')?.classList.contains('on')){
+    clearTimeout(marinoAllBookingsRefreshTimer);
+    marinoAllBookingsRefreshTimer=setTimeout(()=>void marinoLoadAllBookings(),350);
+  }
   return out;
 };
 """
