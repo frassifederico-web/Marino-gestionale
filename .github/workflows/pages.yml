@@ -64,7 +64,6 @@ jobs:
           python scripts/force_capacity_hotfix.py
           python scripts/dehors_zones_oct6_patch.py
           python scripts/fix_reservation_links_nov06.py
-          python scripts/chronological_bookings_patch.py
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text(); p.write_text(s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1))
