@@ -7,8 +7,16 @@ s=s.replace(anchor,anchor+'<div id="marinoAllBookings" aria-live="polite"><div i
 js=r"""
 // Single compact chronological list, today and all future dates. Read-only query.
 let marinoAllBookingsLoading=false,marinoAllBookingsPending=false;
+const marinoBookingsWithTimeout=(work,ms=16000)=>Promise.race([
+  work,
+  new Promise((_,reject)=>setTimeout(()=>reject(new Error('Tempo scaduto nel caricamento prenotazioni')),ms))
+]);
 async function marinoLoadAllBookings(){
-  if(!profile)return;
+  if(!profile){
+    const status=document.getElementById('marinoAllBookingsStatus');
+    if(status)status.textContent='Sessione non pronta: riapri Prenotazioni per riprovare.';
+    return;
+  }
   if(marinoAllBookingsLoading){marinoAllBookingsPending=true;return}
   const status=document.getElementById('marinoAllBookingsStatus'),target=document.getElementById('marinoAllBookingsRows');
   if(!status||!target)return;
@@ -19,7 +27,7 @@ async function marinoLoadAllBookings(){
     const bookings=[];
     // Paginate: no 31-day cutoff and no silent 1000-row truncation.
     for(let offset=0;offset<20000;offset+=500){
-      const q=await db.from('reservations').select('id,service_date,service_code,arrival_time,guest_name,party_size,area,status').gte('service_date',today).neq('status','annullata').order('service_date',{ascending:true}).order('arrival_time',{ascending:true}).order('id',{ascending:true}).range(offset,offset+499);
+      const q=await marinoBookingsWithTimeout(db.from('reservations').select('id,service_date,service_code,arrival_time,guest_name,party_size,area,status').gte('service_date',today).neq('status','annullata').order('service_date',{ascending:true}).order('arrival_time',{ascending:true}).order('id',{ascending:true}).range(offset,offset+499));
       if(q.error)throw q.error;
       bookings.push(...(q.data||[]));
       if((q.data||[]).length<500)break;
@@ -27,8 +35,14 @@ async function marinoLoadAllBookings(){
     }
     const names=new Map();
     for(let i=0;i<bookings.length;i+=100){
-      const q=await db.from('reservation_tables').select('reservation_id,table_id').in('reservation_id',bookings.slice(i,i+100).map(b=>b.id));
-      if(q.error)throw q.error;
+      let q;
+      try {
+        q=await marinoBookingsWithTimeout(db.from('reservation_tables').select('reservation_id,table_id').in('reservation_id',bookings.slice(i,i+100).map(b=>b.id)));
+        if(q.error)throw q.error;
+      } catch(linkError) {
+        console.warn('MARINO: assegnazioni tavoli non disponibili; elenco prenotazioni comunque visibile',linkError);
+        break;
+      }
       for(const link of q.data||[]){
         const t=allTables.find(t=>String(t.id)===String(link.table_id));
         if(t){
@@ -65,11 +79,13 @@ async function marinoLoadAllBookings(){
       fragment.append(row);
     }
     target.replaceChildren(fragment);
+    document.getElementById('bookingList')?.style.removeProperty('display');
     status.textContent=bookings.length+' prenotazioni da oggi in avanti · tocca una riga per modificarla';
     if(!bookings.length)target.textContent='Nessuna prenotazione da oggi in avanti.';
   }catch(e){
     console.error('MARINO chronological bookings loading failed',e);
-    status.textContent='Impossibile caricare l’elenco completo. Riapri Prenotazioni per riprovare.';
+    status.textContent='Errore nel caricamento: '+String(e?.message||e)+'. Riapri Prenotazioni per riprovare.';
+    document.getElementById('bookingList')?.style.setProperty('display','block','important');
     target.replaceChildren();
   }finally{
     marinoAllBookingsLoading=false;
@@ -102,4 +118,4 @@ css="""<style id="marino-compact-bookings-css">
 </style>"""
 s=s.replace('</head>',css+'</head>',1)
 p.write_text(s)
-print('MARINO: compact all-dates bookings list installed')
+print('MARINO: compact all-dates bookings list installed, with timeout and safe fallback')
