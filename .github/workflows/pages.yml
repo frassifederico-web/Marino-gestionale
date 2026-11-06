@@ -26,7 +26,8 @@ jobs:
       - name: Prepara, correggi e valida sito MARINO
         run: |
           mkdir -p _site
-          curl --fail --silent --show-error --location "https://olkvweveldtkavmgccex.supabase.co/functions/v1/marino-app" --output _site/index.html
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-delay 3 "https://olkvweveldtkavmgccex.supabase.co/functions/v1/marino-app" --output _site/index.html
+          test -s _site/index.html
           python scripts/patch_marino.py
           python scripts/secondary_area_patch.py
           python scripts/turnover_patch.py
@@ -49,7 +50,7 @@ jobs:
           python scripts/manual_table_move_patch.py
           python scripts/atomic_chain_move_patch.py
           python scripts/history_mode_patch.py
-          curl --fail --silent --show-error --location "https://raw.githubusercontent.com/frassifederico-web/Marino-gestionale/d4fc2a7a8650984958ba99e9bcbed0837e3000eb/scripts/bulk_area_reallocation_patch.py" --output /tmp/bulk_area_base.py
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-delay 3 "https://raw.githubusercontent.com/frassifederico-web/Marino-gestionale/d4fc2a7a8650984958ba99e9bcbed0837e3000eb/scripts/bulk_area_reallocation_patch.py" --output /tmp/bulk_area_base.py
           python /tmp/bulk_area_base.py
           python scripts/bulk_area_reallocation_patch.py
           python scripts/square_force_4_patch.py
@@ -67,7 +68,7 @@ jobs:
           from pathlib import Path
           p=Path('_site/index.html'); css=Path('scripts/premium_ui.css').read_text(); s=p.read_text(); p.write_text(s.replace('</head>', '<style id="marino-premium-ui">\n'+css+'\n</style></head>', 1))
           PY
-          curl --fail --silent --show-error --location 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' --output _site/jspdf.umd.min.js
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-delay 3 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' --output _site/jspdf.umd.min.js
           test -s _site/jspdf.umd.min.js
           cp pwa/manifest.webmanifest _site/manifest.webmanifest
           cp pwa/sw.js _site/sw.js
