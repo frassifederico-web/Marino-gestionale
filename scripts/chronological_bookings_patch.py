@@ -21,13 +21,17 @@ new_render=r'''async function renderBookings(){
   const d1=new Date(d0);d1.setDate(d1.getDate()+30);
   const y=d1.getFullYear(),m=String(d1.getMonth()+1).padStart(2,'0'),d=String(d1.getDate()).padStart(2,'0');
   const end=y+'-'+m+'-'+d;
-  let [rq,lq]=await Promise.all([
-    db.from('reservations').select('*').gte('service_date',start).lte('service_date',end).neq('status','annullata').order('service_date').order('arrival_time'),
-    db.from('reservation_tables').select('reservation_id,restaurant_tables(code,label)')
-  ]);
+  const rq=await db.from('reservations').select('*').gte('service_date',start).lte('service_date',end).neq('status','annullata').order('service_date').order('arrival_time');
   if(rq.error){host.innerHTML='<div class="warn">Errore caricamento prenotazioni: '+esc(rq.error.message)+'</div>';return}
-  let all=(rq.data||[]), allLinks=lq.data||[];
-  const labelsFor=id=>allLinks.filter(x=>x.reservation_id===id).map(x=>x.restaurant_tables?.label||x.restaurant_tables?.code).filter(Boolean).join(' + ');
+  const all=rq.data||[], allLinks=[];
+  const ids=all.map(r=>r.id);
+  for(let i=0;i<ids.length;i+=100){
+    const lq=await db.from('reservation_tables').select('reservation_id,table_id').in('reservation_id',ids.slice(i,i+100));
+    if(lq.error){host.innerHTML='<div class="warn">Errore caricamento tavoli: '+esc(lq.error.message)+'</div>';console.error('MARINO chronological table links',lq.error);return}
+    allLinks.push(...(lq.data||[]));
+  }
+  const tableById=new Map(allTables.map(t=>[String(t.id),t]));
+  const labelsFor=id=>allLinks.filter(x=>String(x.reservation_id)===String(id)).map(x=>{const t=tableById.get(String(x.table_id));return t?.label||t?.code||''}).filter(Boolean).join(' + ');
   const dayLabel=iso=>new Intl.DateTimeFormat('it-IT',{timeZone:'Europe/Rome',weekday:'long',day:'numeric',month:'long'}).format(new Date(iso+'T12:00:00'));
   const serviceLabel=code=>String(code||'').includes('pranzo')?'Pranzo':'Cena';
   const days=[];for(let i=0;i<=30;i++){let x=new Date(d0);x.setDate(d0.getDate()+i);days.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'))}
