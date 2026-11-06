@@ -50,8 +50,7 @@ jobs:
           python scripts/manual_table_move_patch.py
           python scripts/atomic_chain_move_patch.py
           python scripts/history_mode_patch.py
-          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-delay 3 "https://raw.githubusercontent.com/frassifederico-web/Marino-gestionale/d4fc2a7a8650984958ba99e9bcbed0837e3000eb/scripts/bulk_area_reallocation_patch.py" --output /tmp/bulk_area_base.py
-          python /tmp/bulk_area_base.py
+          python scripts/bulk_area_base_compatible.py
           python scripts/bulk_area_reallocation_patch.py
           python scripts/square_force_4_patch.py
           python scripts/reservation_edit_date_guard_patch.py
