@@ -10,14 +10,14 @@ new2="""links=[];
   const bookingIds=reservations.map(x=>x.id);
   for(let i=0;i<bookingIds.length;i+=100){
     const result=await db.from('reservation_tables')
-      .select('reservation_id,restaurant_tables(code,label)')
+      .select('reservation_id,table_id')
       .in('reservation_id',bookingIds.slice(i,i+100));
     if(result.error){
       console.error('MARINO table assignment loading failed',result.error);
       alert('Errore caricamento tavoli: assegnazioni non verificabili. Ricarica la pagina.');
       throw result.error;
     }
-    links.push(...(result.data||[]));
+    links.push(...(result.data||[]).map(x=>({reservation_id:x.reservation_id,restaurant_tables:allTables.find(t=>t.id===x.table_id)||null})));
   }
   if(links.some(x=>!x.restaurant_tables)){
     console.error('MARINO invalid table links',links.filter(x=>!x.restaurant_tables));
