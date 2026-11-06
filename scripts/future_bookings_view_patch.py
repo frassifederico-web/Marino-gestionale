@@ -92,6 +92,18 @@ async function marinoLoadAllBookings(){
     if(marinoAllBookingsPending){marinoAllBookingsPending=false;void marinoLoadAllBookings()}
   }
 }
+// The initial bookings page may be opened during boot(), before these hooks are installed.
+// Start the first read once authentication and the active bookings view are ready.
+let marinoBookingsInitialStarted=false;
+const marinoBookingsStartupCheck=setInterval(()=>{
+  if(marinoBookingsInitialStarted)return clearInterval(marinoBookingsStartupCheck);
+  const active=document.getElementById('bookings')?.classList.contains('on');
+  if(active&&profile&&document.getElementById('marinoAllBookingsStatus')){
+    marinoBookingsInitialStarted=true;
+    clearInterval(marinoBookingsStartupCheck);
+    void marinoLoadAllBookings();
+  }
+},650);
 const marinoAllBookingsShowPageBase=showPage;
 showPage=function(id,...args){
   const out=marinoAllBookingsShowPageBase.call(this,id,...args);
