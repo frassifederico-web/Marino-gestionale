@@ -75,10 +75,13 @@ renderBookings = function(...args) {
   return result;
 };
 '''
-module_close=re.search(r'(<script\\s+type="module"[^>]*>)(.*?)(</script>)',s,re.S|re.I)
-if not module_close:
+module_start=s.find('<script type="module">')
+if module_start<0:
     raise SystemExit('MARINO: modulo JS non trovato per etichette prenotazioni')
-s=s[:module_close.end(2)]+ '\n'+js+'\n'+s[module_close.end(2):]
+module_end=s.find('</script>',module_start)
+if module_end<0:
+    raise SystemExit('MARINO: chiusura modulo JS non trovata')
+s=s[:module_end]+chr(10)+js+chr(10)+s[module_end:]
 if s.count('MARINO booking-list table label sync')!=1:
     raise SystemExit('MARINO: etichette tavoli non inserite una sola volta')
 print('MARINO: lista prenotazioni sincronizzata con tavoli piantina')
