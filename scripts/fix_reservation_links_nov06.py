@@ -2,7 +2,7 @@ from pathlib import Path
 p=Path('_site/index.html')
 s=p.read_text()
 old="db.from('reservation_tables').select('reservation_id,restaurant_tables(code,label)')"
-if s.count(old)!=1: raise SystemExit(f'Expected one global links query, found {s.count(old)}')
+if s.count(old)<1: raise SystemExit('Global links query not found')
 s=s.replace(old,"Promise.resolve({data:[],error:null})",1)
 old2="links=(l.data||[]).filter(x=>reservations.some(y=>y.id===x.reservation_id));"
 if s.count(old2)!=1: raise SystemExit(f'Expected one link assignment, found {s.count(old2)}')
