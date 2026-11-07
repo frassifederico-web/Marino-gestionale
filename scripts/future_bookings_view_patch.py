@@ -53,6 +53,15 @@ async function marinoLoadAllBookings(){
         }
       }
     }
+    // Daily totals derived solely from the reservations already loaded (read-only).
+    const marinoDailyTotals=new Map();
+    for(const booking of bookings){
+      const key=String(booking.service_date);
+      const totals=marinoDailyTotals.get(key)||{count:0,guests:0};
+      totals.count+=1;
+      totals.guests+=Math.max(0,Number(booking.party_size)||0);
+      marinoDailyTotals.set(key,totals);
+    }
     const fragment=document.createDocumentFragment();
     const dayFormatter=new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
     let previous='';
@@ -60,7 +69,8 @@ async function marinoLoadAllBookings(){
       if(b.service_date!==previous){
         previous=b.service_date;
         const h=document.createElement('div');h.className='marinoCompactDay';
-        h.textContent=dayFormatter.format(new Date(previous+'T12:00:00'));
+        const totals=marinoDailyTotals.get(previous)||{count:0,guests:0};
+        h.textContent=dayFormatter.format(new Date(previous+'T12:00:00'))+' · '+totals.guests+' prenotati · '+totals.count+' prenotazioni';
         fragment.append(h);
       }
       const row=document.createElement('div');row.className='marinoCompactOriginalRow';
