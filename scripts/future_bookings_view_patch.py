@@ -17,11 +17,12 @@ async function marinoLoadAllBookings(){
     if(status)status.textContent='Sessione non pronta: riapri Prenotazioni per riprovare.';
     return;
   }
-  if(marinoAllBookingsLoading){marinoAllBookingsPending=true;return}
+  if(marinoAllBookingsLoading){return}
   const status=document.getElementById('marinoAllBookingsStatus'),target=document.getElementById('marinoAllBookingsRows');
   if(!status||!target)return;
   marinoAllBookingsLoading=true;
-  status.textContent='Caricamento prenotazioni…';
+  // Keep the last successful list visible during a refresh.
+  status.textContent=target.childElementCount?'Aggiornamento prenotazioni…':'Caricamento prenotazioni…';
   try{
     const today=marinoToday();
     const bookings=[];
@@ -53,12 +54,13 @@ async function marinoLoadAllBookings(){
       }
     }
     const fragment=document.createDocumentFragment();
+    const dayFormatter=new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
     let previous='';
     for(const b of bookings){
       if(b.service_date!==previous){
         previous=b.service_date;
         const h=document.createElement('div');h.className='marinoCompactDay';
-        h.textContent=new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).format(new Date(previous+'T12:00:00'));
+        h.textContent=dayFormatter.format(new Date(previous+'T12:00:00'));
         fragment.append(h);
       }
       const row=document.createElement('div');row.className='marinoCompactOriginalRow';
@@ -112,13 +114,14 @@ async function marinoLoadAllBookings(){
       row.append(left,actions);fragment.append(row);
     }
     target.replaceChildren(fragment);
-    status.textContent=bookings.length+' prenotazioni da oggi in avanti · tocca una riga per modificarla';
+    document.getElementById('bookingList')?.style.removeProperty('display');
+    status.textContent=bookings.length+' prenotazioni da oggi in avanti · usa i pulsanti per gestirle';
     if(!bookings.length)target.textContent='Nessuna prenotazione da oggi in avanti.';
   }catch(e){
     console.error('MARINO chronological bookings loading failed',e);
     status.textContent='Errore nel caricamento: '+String(e?.message||e)+'. Riapri Prenotazioni per riprovare.';
     document.getElementById('bookingList')?.style.setProperty('display','block');
-    target.replaceChildren();
+    // Do not discard previously loaded reservations on a transient network error.
   }finally{
     marinoAllBookingsLoading=false;
     if(marinoAllBookingsPending){marinoAllBookingsPending=false;void marinoLoadAllBookings()}
