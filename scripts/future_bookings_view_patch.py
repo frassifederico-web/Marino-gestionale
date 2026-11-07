@@ -117,7 +117,7 @@ async function marinoLoadAllBookings(){
   }catch(e){
     console.error('MARINO chronological bookings loading failed',e);
     status.textContent='Errore nel caricamento: '+String(e?.message||e)+'. Riapri Prenotazioni per riprovare.';
-    document.getElementById('bookingList')?.style.setProperty('display','block','important');
+    document.getElementById('bookingList')?.style.setProperty('display','block');
     target.replaceChildren();
   }finally{
     marinoAllBookingsLoading=false;
@@ -156,7 +156,7 @@ end=s.rfind('</script>')
 if end<0:raise SystemExit('Script end not found')
 s=s[:end]+'\n'+js+'\n'+s[end:]
 css="""<style id="marino-compact-bookings-css">
-#bookings #bookingList{display:none!important}
+#bookings #bookingList{display:none}
 #marinoAllBookings{width:100%}
 .marinoCompactDay{position:sticky;top:55px;z-index:5;padding:9px 6px 5px;background:#fff9df;font-weight:800;text-transform:capitalize;font-size:12px;border-bottom:1px solid #d9b85c}
 .marinoCompactOriginalRow{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #e6ebee;padding:10px 3px;background:white;color:#073e76}
