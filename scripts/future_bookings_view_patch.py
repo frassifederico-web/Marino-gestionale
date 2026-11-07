@@ -27,7 +27,7 @@ async function marinoLoadAllBookings(){
     const bookings=[];
     // Paginate: no 31-day cutoff and no silent 1000-row truncation.
     for(let offset=0;offset<20000;offset+=500){
-      const q=await marinoBookingsWithTimeout(db.from('reservations').select('id,service_date,service_code,arrival_time,guest_name,party_size,area,status').gte('service_date',today).neq('status','annullata').order('service_date',{ascending:true}).order('arrival_time',{ascending:true}).order('id',{ascending:true}).range(offset,offset+499));
+      const q=await marinoBookingsWithTimeout(db.from('reservations').select('id,service_date,service_code,arrival_time,guest_name,party_size,area,status').gt('service_date',today).neq('status','annullata').order('service_date',{ascending:true}).order('arrival_time',{ascending:true}).order('id',{ascending:true}).range(offset,offset+499));
       if(q.error)throw q.error;
       bookings.push(...(q.data||[]));
       if((q.data||[]).length<500)break;
@@ -61,14 +61,19 @@ async function marinoLoadAllBookings(){
         h.textContent=new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).format(new Date(previous+'T12:00:00'));
         fragment.append(h);
       }
-      const row=document.createElement('button');
-      row.type='button';row.className='marinoCompactBooking';
-      const time=document.createElement('span');time.className='marinoCompactTime';time.textContent=String(b.arrival_time||'').slice(0,5);
-      const name=document.createElement('span');name.className='marinoCompactName';name.textContent=b.guest_name||'—';
-      const party=document.createElement('span');party.className='marinoCompactParty';party.textContent=Number(b.party_size||0)+' pers.';
-      const table=document.createElement('span');table.className='marinoCompactTable';table.textContent=(names.get(String(b.id))||['Da assegnare']).join(' + ');
-      row.append(time,name,party,table);
-      row.addEventListener('click',async()=>{
+      const row=document.createElement('div');row.className='marinoBookingCard';
+      const heading=document.createElement('div');heading.className='marinoBookingHeading';
+      const number=document.createElement('span');number.className='marinoBookingNumber';number.textContent='#'+String(b.id).slice(-4);
+      const name=document.createElement('strong');name.textContent=b.guest_name||'—';
+      heading.append(number,name);
+      const detail=document.createElement('div');detail.className='marinoBookingDetails';
+      const time=document.createElement('strong');time.textContent=String(b.arrival_time||'').slice(0,5);
+      const party=document.createElement('strong');party.textContent=Number(b.party_size||0)+' coperti';
+      detail.append(time,party);
+      const location=document.createElement('div');location.className='marinoBookingLocation';
+      location.textContent=String(b.service_code||'').replaceAll('-',' ')+' · '+(names.get(String(b.id))||['Tavolo da assegnare']).join(' + ')+' · '+(b.area||'interno');
+      const edit=document.createElement('button');edit.type='button';edit.className='marinoBookingEdit';edit.textContent='✎';edit.setAttribute('aria-label','Modifica prenotazione di '+(b.guest_name||'ospite'));
+      edit.addEventListener('click',async()=>{
         try{
           $('date').value=b.service_date;
           serviceOptions();
@@ -77,15 +82,16 @@ async function marinoLoadAllBookings(){
           editBooking(b.id);
         }catch(e){console.error(e);alert('Impossibile aprire la prenotazione. Riprova.')}
       });
+      row.append(heading,detail,location,edit);
       fragment.append(row);
     }
     target.replaceChildren(fragment);
-    status.textContent=bookings.length+' prenotazioni da oggi in avanti · tocca una riga per modificarla';
-    if(!bookings.length)target.textContent='Nessuna prenotazione da oggi in avanti.';
+    status.textContent=bookings.length+' prenotazioni nei giorni successivi · usa la matita per modificarle';
+    if(!bookings.length)target.textContent='Nessuna prenotazione nei giorni successivi.';
   }catch(e){
     console.error('MARINO chronological bookings loading failed',e);
     status.textContent='Errore nel caricamento: '+String(e?.message||e)+'. Riapri Prenotazioni per riprovare.';
-    document.getElementById('bookingList')?.style.setProperty('display','block','important');
+    document.getElementById('bookingList')?.style.removeProperty('display');
     target.replaceChildren();
   }finally{
     marinoAllBookingsLoading=false;
@@ -124,13 +130,17 @@ end=s.rfind('</script>')
 if end<0:raise SystemExit('Script end not found')
 s=s[:end]+'\n'+js+'\n'+s[end:]
 css="""<style id="marino-compact-bookings-css">
-#bookings #bookingList{display:none!important}
+#bookings #bookingList{display:block!important}
 #marinoAllBookings{width:100%}
 .marinoCompactDay{position:sticky;top:55px;z-index:5;padding:9px 6px 5px;background:#fff9df;font-weight:800;text-transform:capitalize;font-size:12px;border-bottom:1px solid #d9b85c}
-.marinoCompactBooking{display:grid;grid-template-columns:44px minmax(0,1fr) 48px 72px;align-items:center;gap:5px;width:100%;text-align:left;background:transparent;color:#063f78;border-radius:0;border-bottom:1px solid #e7dcc0;padding:9px 3px;min-height:42px;font-size:12px;font-weight:500}
-.marinoCompactTime{font-weight:800}.marinoCompactName{font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.marinoCompactParty,.marinoCompactTable{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(min-width:700px){.marinoCompactBooking{grid-template-columns:70px minmax(0,1fr) 80px 130px;font-size:14px}}
+.marinoBookingCard{position:relative;padding:13px 112px 13px 12px;border-bottom:1px solid #e2e6ea;background:#fff;color:#163c63;min-height:114px}
+.marinoBookingHeading{display:flex;align-items:center;gap:10px;font-size:16px;margin-bottom:5px}
+.marinoBookingNumber{background:#d5a52b;color:#102b43;border-radius:9px;padding:5px 8px;font-weight:800}
+.marinoBookingDetails{display:flex;gap:12px;align-items:center;font-size:17px;margin-bottom:5px}
+.marinoBookingLocation{color:#758195;font-size:13px;line-height:1.4}
+.marinoBookingEdit{position:absolute;right:12px;top:42px;width:44px;height:44px;border:1px solid #b5c8d8;border-radius:12px;background:#fff;color:#12416c;font-size:22px}
+@media(max-width:380px){.marinoBookingCard{padding-right:65px}}
 </style>"""
 s=s.replace('</head>',css+'</head>',1)
 p.write_text(s)
-print('MARINO: compact all-dates bookings list installed, with timeout and safe fallback')
+print('MARINO: original booking cards preserved; future dates shown as matching cards')
