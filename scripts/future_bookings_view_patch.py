@@ -85,7 +85,7 @@ async function marinoLoadAllBookings(){
       const party=document.createElement('strong');party.textContent=Number(b.party_size||0)+' coperti';
       core.append(time,party);
       const location=document.createElement('div');location.className='marinoCompactOriginalLocation';
-      location.textContent=(String(b.service_code||'').includes('pranzo')?'Pranzo':'Cena')+' · '+(names.get(String(b.id))||['Tavolo da assegnare']).join(' + ')+' · '+(b.area||'interno');
+      location.textContent=(b.service_date==='2026-12-31'&&b.service_code==='giovedi-cena'?'Cenone':(String(b.service_code||'').includes('pranzo')?'Pranzo':'Cena'))+' · '+(names.get(String(b.id))||['Tavolo da assegnare']).join(' + ')+' · '+(b.area||'interno');
       left.append(head,core,location);
       if(String(b.notes||'').trim()){
         const note=document.createElement('div');note.className='marinoCompactOriginalNote';
