@@ -71,7 +71,11 @@ function ensureBookingDayField(){
 }
 function fillBookingDayField(date,locked=false){
   const el=ensureBookingDayField();if(!el)return;
-  const dates=marinoNextBookingDates(31);
+  // Keep every remaining December 2026 date available, including 19/12 lunch and 31/12 Cenone.
+  const yearEnd=new Date('2026-12-31T12:00:00');
+  const today=new Date(marinoToday()+'T12:00:00');
+  const daysUntilYearEnd=Math.max(0,Math.round((yearEnd-today)/86400000)+1);
+  const dates=marinoNextBookingDates(Math.max(31,daysUntilYearEnd));
   const wanted=date||$('date')?.value||marinoToday();
   if(wanted&&!dates.includes(wanted))dates.unshift(wanted);
   el.innerHTML=dates.map(iso=>'<option value="'+iso+'">'+marinoDateLabel(iso)+'</option>').join('');
@@ -81,6 +85,17 @@ function fillBookingDayField(date,locked=false){
   if(wrap)wrap.classList.toggle('bookingDayLocked',locked);
 }
 
+// The 31 December dinner keeps its existing 'giovedi-cena' service code so
+// reservations, statistics, map and database validation remain compatible.
+const marinoDecServiceOptionsBase=serviceOptions;
+serviceOptions=function(...args){
+  const result=marinoDecServiceOptionsBase.apply(this,args);
+  if($('date')?.value==='2026-12-31'){
+    const item=[...($('service')?.options||[])].find(x=>x.value==='giovedi-cena');
+    if(item)item.textContent='Cenone';
+  }
+  return result;
+};
 const _openBookingDayBase=openBooking;
 openBooking=function(){
   marinoEditingServiceDate=null;
@@ -114,6 +129,13 @@ saveBooking=async function(force){
       renderPicker();
       return alert('Ho aggiornato il giorno della prenotazione. Seleziona il tavolo per '+marinoDateLabel(chosen)+' e salva di nuovo.');
     }
+  }
+  // One single booking for more than 20 guests, with explicit confirmation.
+  // Do not lower the number of guests to 20 or split the booking.
+  const guests=Number($('party')?.value||0);
+  if(guests>20&&!force){
+    if(!confirm('Vuoi inserire un\u2019unica prenotazione da '+guests+' persone con forzatura?\\n\\nI tavoli possono essere separati e non attigui. Devono comunque essere liberi, avere posti sufficienti e rispettare la capienza del servizio.'))return;
+    return saveBooking(true);
   }
   return _saveBookingDayBase(force);
 };
