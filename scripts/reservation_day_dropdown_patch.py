@@ -78,21 +78,47 @@ function fillBookingDayField(date,locked=false){
   const dates=marinoNextBookingDates(Math.max(31,daysUntilYearEnd));
   const wanted=date||$('date')?.value||marinoToday();
   if(wanted&&!dates.includes(wanted))dates.unshift(wanted);
-  el.innerHTML=dates.map(iso=>'<option value="'+iso+'">'+marinoDateLabel(iso)+'</option>').join('');
+  el.innerHTML=dates.map(iso=>'<option value="'+iso+'" '+(marinoCalendarClosed(iso)?'disabled':'')+'>'+marinoDateLabel(iso)+(marinoCalendarClosed(iso)?' - CHIUSO':'')+'</option>').join('');
   el.value=wanted;
   el.disabled=locked;
   const wrap=$('bookingDayWrap');
   if(wrap)wrap.classList.toggle('bookingDayLocked',locked);
 }
 
-// The 31 December dinner keeps its existing 'giovedi-cena' service code so
-// reservations, statistics, map and database validation remain compatible.
+// December 2026 has an explicit opening calendar. Outside it, keep standard services.
+// 31 December remains 'giovedi-cena' in storage, displayed as Cenone.
+function marinoCalendarClosed(day){
+  return ['2026-12-09','2026-12-14','2026-12-25','2026-12-26','2026-12-28','2027-01-01'].includes(day)
+    ||(day>='2027-01-07'&&day<='2027-01-13');
+}
+function marinoDecemberServiceOptions(day){
+  if(!day||day<'2026-12-01'||day>'2026-12-31')return null;
+  if(marinoCalendarClosed(day))return [];
+  const weekDay=new Date(day+'T12:00:00').getDay();
+  if(day==='2026-12-08')return [['martedi-pranzo','Martedi pranzo']];
+  if(day==='2026-12-19')return [['sabato-pranzo','Sabato pranzo'],['sabato-cena','Sabato cena']];
+  if(weekDay===0)return [['domenica-pranzo','Domenica pranzo']];
+  if(weekDay===6)return [['sabato-cena','Sabato cena']];
+  const code=['domenica','lunedi','martedi','mercoledi','giovedi','venerdi','sabato'][weekDay]+'-cena';
+  return [[code,day==='2026-12-31'?'Cenone':'Cena']];
+}
 const marinoDecServiceOptionsBase=serviceOptions;
 serviceOptions=function(...args){
+  const previous=$('service')?.value||'';
   const result=marinoDecServiceOptionsBase.apply(this,args);
-  if($('date')?.value==='2026-12-31'){
-    const item=[...($('service')?.options||[])].find(x=>x.value==='giovedi-cena');
-    if(item)item.textContent='Cenone';
+  const day=$('date')?.value||'';
+  const custom=marinoDecemberServiceOptions(day);
+  const selector=$('service');
+  if(!selector)return result;
+  if(marinoCalendarClosed(day)){
+    selector.innerHTML='<option value="">Chiuso - nessun servizio</option>';
+    selector.disabled=true;
+    return result;
+  }
+  selector.disabled=false;
+  if(custom!==null){
+    selector.replaceChildren(...custom.map(([value,label])=>new Option(label,value)));
+    if(custom.some(([value])=>value===previous))selector.value=previous;
   }
   return result;
 };
@@ -115,6 +141,10 @@ editBooking=function(id){
 
 const _saveBookingDayBase=saveBooking;
 saveBooking=async function(force){
+  const day=$('bookingDay')?.value||$('date')?.value||'';
+  if(marinoCalendarClosed(day))return alert('Il ristorante e chiuso in questa data. Seleziona un giorno aperto.');
+  const permitted=marinoDecemberServiceOptions(day);
+  if(permitted!==null&&!permitted.some(([code])=>code===$('service')?.value))return alert('Servizio non disponibile per il giorno selezionato.');
   if(!editing){
     const chosen=$('bookingDay')?.value||$('date')?.value;
     if(!chosen)return alert('Seleziona il giorno della prenotazione.');
