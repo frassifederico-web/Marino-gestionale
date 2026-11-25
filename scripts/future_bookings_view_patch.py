@@ -104,7 +104,7 @@ async function marinoLoadAllBookings(){
         button(arrived?'↩':'✓','marinoCompactArrive',arrived?'Annulla arrivo':'Segna come arrivato',async()=>{
           // Read the current row before toggling to avoid overwriting a change
           // made by another device while this list was open.
-          const actionButton=actions.lastElementChild;
+          const actionButton=actions.querySelector('.marinoCompactArrive');
           if(actionButton?.disabled)return;
           if(actionButton)actionButton.disabled=true;
           try{
