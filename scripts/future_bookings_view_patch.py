@@ -101,10 +101,33 @@ async function marinoLoadAllBookings(){
       };
       if(b.status==='confermata'){
         const arrived=Boolean(b.arrived_at);
-        button(arrived?'↩':'✓','marinoCompactArrive',arrived?'Da arrivare':'Arrivato',async()=>{
-          if(typeof setChronologicalArrival==='function')await setChronologicalArrival(b.id,!arrived,b.service_date);
-          else alert('Azione arrivo momentaneamente non disponibile');
-          void marinoLoadAllBookings();
+        button(arrived?'↩':'✓','marinoCompactArrive',arrived?'Annulla arrivo':'Segna come arrivato',async()=>{
+          // Read the current row before toggling to avoid overwriting a change
+          // made by another device while this list was open.
+          const actionButton=actions.lastElementChild;
+          if(actionButton?.disabled)return;
+          if(actionButton)actionButton.disabled=true;
+          try{
+            const current=await marinoBookingsWithTimeout(db.from('reservations')
+              .select('id,arrived_at,status').eq('id',b.id).single());
+            if(current.error)throw current.error;
+            if(current.data.status!=='confermata')throw new Error('La prenotazione non è più confermata. Ricarica la lista.');
+            const currentArrived=Boolean(current.data.arrived_at);
+            if(currentArrived!==arrived)throw new Error('L’arrivo è già stato modificato da un altro dispositivo. Ricarica la lista.');
+            const updated=await marinoBookingsWithTimeout(db.from('reservations')
+              .update({arrived_at:arrived?null:new Date().toISOString()})
+              .eq('id',b.id).eq('status','confermata')
+              .select('id,arrived_at'));
+            if(updated.error)throw updated.error;
+            if(!updated.data||updated.data.length!==1)throw new Error('La modifica non è stata confermata dal database.');
+            void marinoLoadAllBookings();
+          }catch(e){
+            console.error('MARINO: errore aggiornamento arrivo',e);
+            alert('Impossibile aggiornare l’arrivo: '+String(e?.message||e));
+            void marinoLoadAllBookings();
+          }finally{
+            if(actionButton)actionButton.disabled=false;
+          }
         });
       }
       button('✎','marinoCompactEdit','Modifica',async()=>{
